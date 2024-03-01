@@ -1,0 +1,14 @@
+{
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "mkdir -p build && javac -d ./build Typecheck.java",
+            "group": "build",
+            "problemMatcher": [],
+            "windows":{
+                "command": "mkdir build -F && javac -d build Typecheck.java"
+            }
+        },
+    ]
+}
