@@ -8,4 +8,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- A pretty printer for the minijava AST
+- Pretty printer for the minijava AST
+- SymTableVis class for generating a symbol table
