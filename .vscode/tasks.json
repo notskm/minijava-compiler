@@ -1,14 +1,15 @@
 {
     "tasks": [
         {
-            "label": "build",
-            "type": "shell",
-            "command": "mkdir -p build && javac -d ./build Typecheck.java",
+            "type": "java (build)",
+            "paths": [
+                "${workspace}"
+            ],
+            "isFullBuild": true,
             "group": "build",
             "problemMatcher": [],
-            "windows":{
-                "command": "mkdir build -F && javac -d build Typecheck.java"
-            }
-        },
+            "label": "java (build): Build Workspace",
+            "detail": "$(tools) Build all the Java projects in workspace.",
+        }
     ]
 }

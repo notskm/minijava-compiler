@@ -1,0 +1,7 @@
+{
+    "terminal.integrated.automationProfile.windows": {
+        "path": "cmd",
+    },
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.autobuild.enabled": false,
+}
