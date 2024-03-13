@@ -160,4 +160,9 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
                 return "";
         }
     }
+
+    // For testing
+    void setPrefix(String prefix) {
+        keyPrefix = prefix;
+    }
 }
