@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import syntaxtree.*;
 
 public class TestSymTableVis {
-    SymTableVis<Void, Integer> vis;
+    private SymTableVis<Void, Integer> vis;
 
     @BeforeEach
     public void setup() {
