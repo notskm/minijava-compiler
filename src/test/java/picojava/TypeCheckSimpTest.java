@@ -42,11 +42,12 @@ public class TypeCheckSimpTest {
     }
 
     @Test
-    public void testIdentifierTypeIsNameOfIdentifier() {
+    public void testAllocationExpressionTypeIsNameOfIdentifier() {
         final NodeToken nt = new NodeToken("MyType");
         final Identifier id = new Identifier(nt);
+        final AllocationExpression ae = new AllocationExpression(id);
 
-        final String ret = id.accept(check, emptySymbolTable);
+        final String ret = ae.accept(check, emptySymbolTable);
 
         assertEquals("MyType", ret);
     }

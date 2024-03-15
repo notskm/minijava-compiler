@@ -31,10 +31,6 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         return "Boolean";
     }
 
-    public String visit(Identifier n, HashMap<String, String> argu) {
-        return n.f0.toString();
-    }
-
     public String visit(ArrayAllocationExpression n, HashMap<String, String> argu) {
         final String type = n.f3.accept(this, argu);
 
@@ -43,6 +39,10 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         } else {
             return "error";
         }
+    }
+
+    public String visit(AllocationExpression n, HashMap<String, String> argu) {
+        return n.f1.f0.toString();
     }
 
     public String visit(NotExpression n, HashMap<String, String> argu) {
