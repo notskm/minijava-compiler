@@ -20,6 +20,15 @@ public class Typecheck {
             for (HashMap.Entry<String, String> entry : symt.entrySet()) {
                 System.out.printf("%s: %s%n", entry.getKey(), entry.getValue());
             }
+
+            TypeCheckSimp check = new TypeCheckSimp();
+            final String output = root.accept(check, vis.symt);
+            System.out.println(output);
+            if (output.equals("error")) {
+                System.out.println("Type error");
+            } else {
+                System.out.println("Program type checked successfully");
+            }
         } catch (ParseException e) {
             System.err.println("Error! " + e.getMessage());
         }

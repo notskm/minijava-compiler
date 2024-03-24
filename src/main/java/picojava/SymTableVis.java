@@ -7,7 +7,7 @@ import visitor.GJDepthFirst;
 
 public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
     public HashMap<String, String> symt;
-    private String keyPrefix = "";
+    private String keyPrefix = "Global";
 
     public SymTableVis() {
         symt = new HashMap<>();
@@ -16,13 +16,15 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
     @Override
     public R visit(MainClass n, A argu) {
         final String prefix = keyPrefix;
-        keyPrefix += n.f1.f0.toString() + ".";
+        keyPrefix += "." + n.f1.f0.toString();
 
-        final String main = n.f6.toString();
+        final String main = n.f6.toString() + "()";
         final String args = n.f11.f0.toString();
+        final String argsType = n.f8.toString() + n.f9.toString() + n.f10.toString();
+        final String mainType = "(" + argsType + ") -> " + n.f5.toString();
 
-        symt.put(keyPrefix + main, n.f5.toString());
-        symt.put(keyPrefix + main + "." + args, n.f8.toString());
+        symt.put(keyPrefix + "." + main, mainType);
+        symt.put(keyPrefix + "." + main + "." + args, argsType);
 
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
@@ -50,7 +52,7 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
     @Override
     public R visit(ClassDeclaration n, A argu) {
         final String prefix = keyPrefix;
-        keyPrefix += n.f1.f0.toString() + ".";
+        keyPrefix += "." + n.f1.f0.toString();
 
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
@@ -66,7 +68,7 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
     @Override
     public R visit(ClassExtendsDeclaration n, A argu) {
         String prefix = keyPrefix;
-        keyPrefix += n.f1.f0.toString() + ".";
+        keyPrefix += "." + n.f1.f0.toString();
 
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
@@ -83,19 +85,24 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
 
     @Override
     public R visit(MethodDeclaration n, A argu) {
-        final String methodName = n.f2.f0.toString();
-        final String key = keyPrefix + methodName;
+        final String methodName = n.f2.f0.toString() + "()";
+        final String methodKey = keyPrefix + "." + methodName;
+
         // FIXME: Error if key already exists
-        symt.put(key, getTypeAsString(n.f1));
+        symt.put(methodKey, "(");
 
         final String prefix = keyPrefix;
-        keyPrefix += methodName + ".";
+        keyPrefix = methodKey;
 
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
         n.f2.accept(this, argu);
         n.f3.accept(this, argu);
         n.f4.accept(this, argu);
+
+        final String returnType = getTypeAsString(n.f1);
+        symt.put(methodKey, symt.get(methodKey) + ") -> " + returnType);
+
         n.f5.accept(this, argu);
         n.f6.accept(this, argu);
         n.f7.accept(this, argu);
@@ -111,11 +118,31 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
     }
 
     @Override
+    public R visit(FormalParameterList n, A argu) {
+        n.f0.accept(this, argu);
+
+        String list = getTypeAsString(n.f0.f0);
+
+        for (Node param : n.f1.nodes) {
+            System.out.println(param.toString());
+            param.accept(this, argu);
+
+            final FormalParameter p = ((FormalParameterRest) param).f1;
+            final String type = getTypeAsString(p.f0);
+            list += ", " + type;
+        }
+
+        symt.put(keyPrefix, symt.get(keyPrefix) + list);
+
+        return null;
+    }
+
+    @Override
     public R visit(FormalParameter n, A argu) {
         final String type = getTypeAsString(n.f0);
         final String id = n.f1.f0.toString();
 
-        symt.put(keyPrefix + id, type);
+        symt.put(keyPrefix + "." + id, type);
 
         return null;
     }
@@ -126,14 +153,14 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         String id = n.f1.f0.tokenImage;
 
         // FIXME: Error if key already exists
-        symt.put(keyPrefix + id, type);
+        symt.put(keyPrefix + "." + id, type);
 
         return null;
     }
 
     public R visit(Block n, A argu) {
         final String prefix = keyPrefix;
-        keyPrefix += argu + ".";
+        keyPrefix += "." + argu;
 
         // TODO: Decide how to number blocks if necessary
         n.f0.accept(this, argu);

@@ -34,7 +34,7 @@ public class TestSymTableVis {
         decl.accept(vis, 0);
 
         final String typeString = indexToType(typeIndex);
-        assertEquals(typeString, vis.symt.get("my_var"));
+        assertEquals(typeString, vis.symt.get("Global.my_var"));
     }
 
     @ParameterizedTest
@@ -45,7 +45,7 @@ public class TestSymTableVis {
         final Identifier id = new Identifier(new NodeToken("abc"));
         final VarDeclaration decl = new VarDeclaration(type, id);
 
-        vis.setPrefix("test.");
+        vis.setPrefix("test");
 
         decl.accept(vis, 0);
 
