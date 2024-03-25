@@ -2,8 +2,6 @@ package picojava;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.HashMap;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -11,12 +9,12 @@ import syntaxtree.*;
 
 public class TypeCheckSimpTest {
     private TypeCheckSimp check;
-    private HashMap<String, String> emptySymbolTable;
+    private SymbolTable emptySymbolTable;
 
     @BeforeEach
     public void setup() {
         check = new TypeCheckSimp();
-        emptySymbolTable = new HashMap<>();
+        emptySymbolTable = new SymbolTable();
     }
 
     @Test

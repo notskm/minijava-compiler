@@ -1,17 +1,18 @@
 package picojava;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import picojava.SymbolTable.ClassBinding;
+import picojava.SymbolTable.MethodBinding;
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
-public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>> {
-    private String currentClass = "";
-    private String currentScope = "Global";
+public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
+    private ClassBinding currentClass;
+    private MethodBinding currentMethod;
 
-    public String visit(Goal n, HashMap<String, String> argu) {
+    public String visit(Goal n, SymbolTable argu) {
         // Distinct: f0, f1 together
         final String mainClassResult = n.f0.accept(this, argu);
         final String classesResult = n.f1.accept(this, argu);
@@ -23,25 +24,12 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         return "";
     }
 
-    public String visit(MainClass n, HashMap<String, String> argu) {
-        final String scope = currentScope;
-        currentScope += "." + n.f1.f0.toString();
-        currentClass = n.f1.f0.toString();
+    public String visit(MainClass n, SymbolTable argu) {
+        final String className = n.f1.f0.tokenImage;
+        final String mainMethodName = n.f6.tokenImage;
 
-        // n.f0.accept(this, argu);
-        // n.f1.accept(this, argu);
-        // n.f2.accept(this, argu);
-        // n.f3.accept(this, argu);
-        // n.f4.accept(this, argu);
-        // n.f5.accept(this, argu);
-        // n.f6.accept(this, argu);
-        // n.f7.accept(this, argu);
-        // n.f8.accept(this, argu);
-        // n.f9.accept(this, argu);
-        // n.f10.accept(this, argu);
-        // n.f11.accept(this, argu);
-        // n.f12.accept(this, argu);
-        // n.f13.accept(this, argu);
+        currentClass = argu.getClassBinding(className);
+        currentMethod = currentClass.getMethod(mainMethodName);
 
         if (n.f14.present()) {
             // Distinct, 0 or more, all are real types
@@ -58,24 +46,22 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         n.f16.accept(this, argu);
         n.f17.accept(this, argu);
 
-        currentScope = scope;
+        currentMethod = null;
+        currentClass = null;
+
         return "";
     }
 
     @Override
-    public String visit(TypeDeclaration n, HashMap<String, String> argu) {
+    public String visit(TypeDeclaration n, SymbolTable argu) {
         return n.f0.accept(this, argu);
     }
 
     @Override
-    public String visit(ClassDeclaration n, HashMap<String, String> argu) {
-        final String prefix = currentScope;
-        currentScope += "." + n.f1.f0.toString();
-        currentClass = n.f1.f0.toString();
+    public String visit(ClassDeclaration n, SymbolTable argu) {
+        final String className = n.f1.f0.tokenImage;
+        currentClass = argu.getClassBinding(className);
 
-        // n.f0.accept(this, argu);
-        // n.f1.accept(this, argu);
-        // n.f2.accept(this, argu);
         // Distinct
         n.f3.accept(this, argu);
         // Distinct
@@ -88,11 +74,11 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
 
         n.f5.accept(this, argu);
 
-        currentScope = prefix;
+        currentClass = null;
         return "";
     }
 
-    public String visit(NodeListOptional n, HashMap<String, String> argu) {
+    public String visit(NodeListOptional n, SymbolTable argu) {
         for (Node node : n.nodes) {
             if (node.accept(this, argu).equals("error")) {
                 return "error";
@@ -102,16 +88,10 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
     }
 
     @Override
-    public String visit(ClassExtendsDeclaration n, HashMap<String, String> argu) {
-        String prefix = currentScope;
-        currentScope += "." + n.f1.f0.toString();
-        currentClass = n.f1.f0.toString();
+    public String visit(ClassExtendsDeclaration n, SymbolTable argu) {
+        final String className = n.f1.f0.tokenImage;
+        currentClass = argu.getClassBinding(className);
 
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
         // Distinct
         n.f5.accept(this, argu);
         // Distinct, no overloading
@@ -120,34 +100,28 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         if (methodsResult.equals("error")) {
             return "error";
         }
-        n.f7.accept(this, argu);
 
-        currentScope = prefix;
+        currentClass = null;
         return "";
     }
 
-    public String visit(VarDeclaration n, HashMap<String, String> argu) {
+    public String visit(VarDeclaration n, SymbolTable argu) {
         return "";
     }
 
     @Override
-    public String visit(MethodDeclaration n, HashMap<String, String> argu) {
-        n.f0.accept(this, argu);
-
+    public String visit(MethodDeclaration n, SymbolTable argu) {
+        // TODO: Replace this with currentMethod.getReturnType()?
         final String returnType = n.f1.accept(this, argu);
+        final String methodName = n.f2.f0.tokenImage + "()";
 
-        final String methodName = n.f2.f0.toString() + "()";
-        if (lookupSymbol(methodName, argu) == null) {
+        currentMethod = currentClass.getMethod(methodName);
+        if (currentMethod == null) {
             return "error";
         }
 
-        final String methodKey = currentScope + "." + methodName;
-        final String prefix = currentScope;
-        currentScope = methodKey;
-
-        n.f3.accept(this, argu);
-
         // Ensure all parameters have distinct IDs
+        // TODO: If this is done in the symbol table, why do it here?
         if (n.f4.present()) {
             FormalParameterList parameters = (FormalParameterList) n.f4.node;
             Set<String> paramSet = new HashSet<>();
@@ -161,8 +135,6 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
             }
         }
 
-        n.f5.accept(this, argu);
-        n.f6.accept(this, argu);
         // Distinct
         n.f7.accept(this, argu);
 
@@ -172,28 +144,25 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
             }
         }
 
-        n.f9.accept(this, argu);
         final String returnExpression = n.f10.accept(this, argu);
         if (!returnExpression.equals(returnType)) {
             return "error";
         }
-        n.f11.accept(this, argu);
-        n.f12.accept(this, argu);
 
-        currentScope = prefix;
+        currentMethod = null;
 
         return "";
     }
 
-    public String visit(NodeChoice n, HashMap<String, String> argu) {
+    public String visit(NodeChoice n, SymbolTable argu) {
         return n.choice.accept(this, argu);
     }
 
-    public String visit(Expression n, HashMap<String, String> argu) {
+    public String visit(Expression n, SymbolTable argu) {
         return n.f0.accept(this, argu);
     }
 
-    public String visit(Type n, HashMap<String, String> argu) {
+    public String visit(Type n, SymbolTable argu) {
         switch (n.f0.which) {
             case 0:
                 return "Int[]";
@@ -209,11 +178,11 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         }
     }
 
-    public String visit(Statement n, HashMap<String, String> argu) {
+    public String visit(Statement n, SymbolTable argu) {
         return n.f0.accept(this, argu);
     }
 
-    public String visit(Block n, HashMap<String, String> argu) {
+    public String visit(Block n, SymbolTable argu) {
         if (!n.f1.present()) {
             return "";
         }
@@ -229,8 +198,9 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         return "";
     }
 
-    public String visit(AssignmentStatement n, HashMap<String, String> argu) {
-        final String idType = lookupSymbol(n.f0.f0.toString(), argu);
+    public String visit(AssignmentStatement n, SymbolTable argu) {
+        final String lhs = n.f0.f0.tokenImage;
+        final String idType = lookupSymbol(lhs, argu);
         final String expressionType = n.f2.accept(this, argu);
 
         if (isSubtypeOf(expressionType, idType, argu)) {
@@ -240,7 +210,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         }
     }
 
-    public String visit(ArrayAssignmentStatement n, HashMap<String, String> argu) {
+    public String visit(ArrayAssignmentStatement n, SymbolTable argu) {
         final String idType = lookupSymbol(n.f0.f0.toString(), argu);
         final String expression1Type = n.f2.accept(this, argu);
         final String expression2Type = n.f5.accept(this, argu);
@@ -252,7 +222,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         }
     }
 
-    public String visit(IfStatement n, HashMap<String, String> argu) {
+    public String visit(IfStatement n, SymbolTable argu) {
         final String expressionType = n.f2.accept(this, argu);
         final String ifStatementType = n.f4.accept(this, argu);
         final String elseStatementType = n.f4.accept(this, argu);
@@ -267,7 +237,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         return "";
     }
 
-    public String visit(WhileStatement n, HashMap<String, String> argu) {
+    public String visit(WhileStatement n, SymbolTable argu) {
         final String expressionType = n.f2.accept(this, argu);
         final String statementType = n.f4.accept(this, argu);
         if (expressionType.equals("Boolean") && !statementType.equals("error")) {
@@ -277,56 +247,65 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         }
     }
 
-    public String visit(PrintStatement n, HashMap<String, String> argu) {
+    public String visit(PrintStatement n, SymbolTable argu) {
         final String type = n.f2.accept(this, argu);
         return type.equals("Int") ? "" : "error";
     }
 
-    public String visit(AndExpression n, HashMap<String, String> argu) {
+    public String visit(AndExpression n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
         return p1Type.equals("Boolean") && p2Type.equals("Boolean") ? "Boolean" : "error";
     }
 
-    public String visit(CompareExpression n, HashMap<String, String> argu) {
+    public String visit(CompareExpression n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
         return p1Type.equals("Int") && p2Type.equals("Int") ? "Boolean" : "error";
     }
 
-    public String visit(PlusExpression n, HashMap<String, String> argu) {
+    public String visit(PlusExpression n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
         return p1Type.equals("Int") && p2Type.equals("Int") ? "Int" : "error";
     }
 
-    public String visit(MinusExpression n, HashMap<String, String> argu) {
+    public String visit(MinusExpression n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
         return p1Type.equals("Int") && p2Type.equals("Int") ? "Int" : "error";
     }
 
-    public String visit(TimesExpression n, HashMap<String, String> argu) {
+    public String visit(TimesExpression n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
         return p1Type.equals("Int") && p2Type.equals("Int") ? "Int" : "error";
     }
 
-    public String visit(ArrayLookup n, HashMap<String, String> argu) {
+    public String visit(ArrayLookup n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
         return p1Type.equals("Int[]") && p2Type.equals("Int") ? "Int" : "error";
     }
 
-    public String visit(ArrayLength n, HashMap<String, String> argu) {
+    public String visit(ArrayLength n, SymbolTable argu) {
         final String type = n.f0.accept(this, argu);
         return type.equals("Int[]") ? "Int" : "error";
     }
 
-    public String visit(MessageSend n, HashMap<String, String> argu) {
-        final String classType = n.f0.accept(this, argu);
+    public String visit(MessageSend n, SymbolTable argu) {
+        final String className = n.f0.accept(this, argu);
         final String methodName = n.f2.f0.toString() + "()";
-        final String methodType = lookupInheritedSymbol("Global." + classType, methodName, argu);
+        ClassBinding classBinding = argu.getClassBinding(className);
+
+        if (classBinding == null) {
+            return "error";
+        }
+        MethodBinding method = classBinding.getMethod(methodName);
+        if (method == null) {
+            return "error";
+        }
+        final String methodType = method.getType();
 
         if (methodType == null) {
             return "error";
@@ -347,9 +326,11 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
 
         final String[] argumentList = arguments.split(", ");
 
+        if (parameterList.length != argumentList.length) {
+            return "error";
+        }
+
         for (int i = 0; i < parameterList.length; i++) {
-            System.out.println(methodType);
-            System.out.println(argumentList[i]);
             if (!isSubtypeOf(argumentList[i], parameterList[i], argu)) {
                 return "error";
             }
@@ -358,7 +339,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         return returnType;
     }
 
-    public String visit(ExpressionList n, HashMap<String, String> argu) {
+    public String visit(ExpressionList n, SymbolTable argu) {
         String list = n.f0.accept(this, argu);
         if (list == null) {
             list = "";
@@ -375,27 +356,27 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         return list;
     }
 
-    public String visit(ExpressionRest n, HashMap<String, String> argu) {
+    public String visit(ExpressionRest n, SymbolTable argu) {
         return n.f1.accept(this, argu);
     }
 
-    public String visit(PrimaryExpression n, HashMap<String, String> argu) {
+    public String visit(PrimaryExpression n, SymbolTable argu) {
         return n.f0.accept(this, argu);
     }
 
-    public String visit(IntegerLiteral n, HashMap<String, String> argu) {
+    public String visit(IntegerLiteral n, SymbolTable argu) {
         return "Int";
     }
 
-    public String visit(TrueLiteral n, HashMap<String, String> argu) {
+    public String visit(TrueLiteral n, SymbolTable argu) {
         return "Boolean";
     }
 
-    public String visit(FalseLiteral n, HashMap<String, String> argu) {
+    public String visit(FalseLiteral n, SymbolTable argu) {
         return "Boolean";
     }
 
-    public String visit(Identifier n, HashMap<String, String> argu) {
+    public String visit(Identifier n, SymbolTable argu) {
         final String test = n.f0.toString();
         // final String type = lookupSymbol(currentScope + "." + test, argu);
         final String type = lookupSymbol(test, argu);
@@ -406,15 +387,15 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         }
     }
 
-    public String visit(ThisExpression n, HashMap<String, String> argu) {
-        if (!currentClass.isEmpty()) {
-            return currentClass;
+    public String visit(ThisExpression n, SymbolTable argu) {
+        if (currentClass != null) {
+            return currentClass.getName();
         } else {
             return "error";
         }
     }
 
-    public String visit(ArrayAllocationExpression n, HashMap<String, String> argu) {
+    public String visit(ArrayAllocationExpression n, SymbolTable argu) {
         final String type = n.f3.accept(this, argu);
 
         if (type.equals("Int")) {
@@ -424,11 +405,11 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         }
     }
 
-    public String visit(AllocationExpression n, HashMap<String, String> argu) {
+    public String visit(AllocationExpression n, SymbolTable argu) {
         return n.f1.f0.toString();
     }
 
-    public String visit(NotExpression n, HashMap<String, String> argu) {
+    public String visit(NotExpression n, SymbolTable argu) {
         final String type = n.f1.accept(this, argu);
         if (type.equals("Boolean")) {
             return type;
@@ -437,53 +418,25 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
         }
     }
 
-    public String visit(BracketExpression n, HashMap<String, String> argu) {
+    public String visit(BracketExpression n, SymbolTable argu) {
         return n.f1.accept(this, argu);
     }
 
-    private String lookupSymbol(String name, HashMap<String, String> symt) {
-        String type = lookupSymbolRecursive(currentScope, name, symt);
-        if (type == null) {
-            type = lookupInheritedSymbol(currentClass, name, symt);
+    private String lookupSymbol(String name, SymbolTable symt) {
+        String type = null;
+
+        if (currentMethod != null) {
+            type = currentMethod.lookup(name);
+        }
+
+        if (type == null && currentClass != null) {
+            type = currentClass.lookup(name);
         }
 
         return type;
     }
 
-    private String lookupSymbolRecursive(String scope, String name, HashMap<String, String> symt) {
-        final String key = scope + "." + name;
-        final String value = symt.get(key);
-
-        if (value != null) {
-            return value;
-        }
-
-        final int index = scope.lastIndexOf('.');
-        if (index == -1) {
-            return null;
-        }
-
-        final String newKey = scope.substring(0, index);
-        return lookupSymbolRecursive(newKey, name, symt);
-    }
-
-    private String lookupInheritedSymbol(String clazz, String name, HashMap<String, String> symt) {
-        if (clazz == null) {
-            return null;
-        }
-
-        final String key = clazz + "." + name;
-        final String type = symt.get(key);
-
-        if (type != null) {
-            return type;
-        }
-
-        final String baseClass = symt.get(clazz);
-        return lookupInheritedSymbol(baseClass, name, symt);
-    }
-
-    private boolean isSubtypeOf(String derived, String base, HashMap<String, String> symt) {
+    private boolean isSubtypeOf(String derived, String base, SymbolTable symt) {
         if (derived == null) {
             return false;
         }
@@ -492,7 +445,11 @@ public class TypeCheckSimp extends GJDepthFirst<String, HashMap<String, String>>
             return true;
         }
 
-        final String baseOfDerived = symt.get(derived);
-        return isSubtypeOf(baseOfDerived, base, symt);
+        final ClassBinding baseClass = symt.getClassBinding(derived);
+        if (baseClass != null) {
+            return isSubtypeOf(baseClass.getBaseClass(), base, symt);
+        } else {
+            return false;
+        }
     }
 }

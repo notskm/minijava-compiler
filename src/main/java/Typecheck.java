@@ -1,5 +1,3 @@
-import java.util.HashMap;
-
 import picojava.*;
 import syntaxtree.*;
 
@@ -13,13 +11,6 @@ public class Typecheck {
 
             SymTableVis<Void, Integer> vis = new SymTableVis<>();
             root.accept(vis, 0);
-            HashMap<String, String> symt = vis.symt;
-
-            System.out.println();
-            System.out.println("Symbol table:");
-            for (HashMap.Entry<String, String> entry : symt.entrySet()) {
-                System.out.printf("%s: %s%n", entry.getKey(), entry.getValue());
-            }
 
             TypeCheckSimp check = new TypeCheckSimp();
             final String output = root.accept(check, vis.symt);

@@ -1,30 +1,38 @@
 package picojava;
 
-import java.util.HashMap;
-
+import picojava.SymbolTable.ClassBinding;
+import picojava.SymbolTable.MethodBinding;
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
 public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
-    public HashMap<String, String> symt;
-    private String keyPrefix = "Global";
+    public SymbolTable symt = new SymbolTable();
 
-    public SymTableVis() {
-        symt = new HashMap<>();
-    }
+    private String keyPrefix = "Global";
+    ClassBinding currentClass = null;
+    MethodBinding currentMethod = null;
 
     @Override
     public R visit(MainClass n, A argu) {
         final String prefix = keyPrefix;
         keyPrefix += "." + n.f1.f0.toString();
 
-        final String main = n.f6.toString() + "()";
-        final String args = n.f11.f0.toString();
-        final String argsType = n.f8.toString() + n.f9.toString() + n.f10.toString();
-        final String mainType = "(" + argsType + ") -> " + n.f5.toString();
+        final String className = n.f1.f0.tokenImage;
+        final String mainMethodName = n.f6.tokenImage;
+        final String argumentName = n.f11.f0.toString();
+        final String argumentType = n.f8.toString() + n.f9.toString() + n.f10.toString();
+        final String mainType = "(" + argumentType + ") -> " + n.f5.toString();
 
-        symt.put(keyPrefix + "." + main, mainType);
-        symt.put(keyPrefix + "." + main + "." + args, argsType);
+        symt.addClass(className);
+        ClassBinding mainClass = symt.getClassBinding(n.f1.f0.tokenImage);
+        mainClass.addMethod(mainMethodName);
+
+        MethodBinding mainMethod = mainClass.getMethod(mainMethodName);
+        mainMethod.addParameter(argumentName, argumentType);
+        mainMethod.setReturnType(mainType);
+
+        currentClass = mainClass;
+        currentMethod = mainMethod;
 
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
@@ -46,6 +54,8 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         n.f17.accept(this, argu);
 
         keyPrefix = prefix;
+        currentClass = null;
+        currentMethod = null;
         return null;
     }
 
@@ -53,6 +63,11 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
     public R visit(ClassDeclaration n, A argu) {
         final String prefix = keyPrefix;
         keyPrefix += "." + n.f1.f0.toString();
+
+        final String className = n.f1.f0.tokenImage;
+
+        symt.addClass(className);
+        currentClass = symt.getClassBinding(className);
 
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
@@ -62,6 +77,7 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         n.f5.accept(this, argu);
 
         keyPrefix = prefix;
+        currentClass = null;
         return null;
     }
 
@@ -69,6 +85,13 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
     public R visit(ClassExtendsDeclaration n, A argu) {
         String prefix = keyPrefix;
         keyPrefix += "." + n.f1.f0.toString();
+
+        final String className = n.f1.f0.tokenImage;
+        final String baseClass = n.f3.f0.tokenImage;
+
+        symt.addClass(className);
+        currentClass = symt.getClassBinding(className);
+        currentClass.setBaseClass(baseClass);
 
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
@@ -80,6 +103,8 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         n.f7.accept(this, argu);
 
         keyPrefix = prefix;
+        currentClass = null;
+
         return null;
     }
 
@@ -89,7 +114,10 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         final String methodKey = keyPrefix + "." + methodName;
 
         // FIXME: Error if key already exists
-        symt.put(methodKey, "(");
+
+        currentClass.addMethod(methodName);
+        currentMethod = currentClass.getMethod(methodName);
+        currentMethod.setReturnType(getTypeAsString(n.f1));
 
         final String prefix = keyPrefix;
         keyPrefix = methodKey;
@@ -99,10 +127,6 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         n.f2.accept(this, argu);
         n.f3.accept(this, argu);
         n.f4.accept(this, argu);
-
-        final String returnType = getTypeAsString(n.f1);
-        symt.put(methodKey, symt.get(methodKey) + ") -> " + returnType);
-
         n.f5.accept(this, argu);
         n.f6.accept(this, argu);
         n.f7.accept(this, argu);
@@ -114,25 +138,7 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
 
         keyPrefix = prefix;
 
-        return null;
-    }
-
-    @Override
-    public R visit(FormalParameterList n, A argu) {
-        n.f0.accept(this, argu);
-
-        String list = getTypeAsString(n.f0.f0);
-
-        for (Node param : n.f1.nodes) {
-            System.out.println(param.toString());
-            param.accept(this, argu);
-
-            final FormalParameter p = ((FormalParameterRest) param).f1;
-            final String type = getTypeAsString(p.f0);
-            list += ", " + type;
-        }
-
-        symt.put(keyPrefix, symt.get(keyPrefix) + list);
+        currentMethod = null;
 
         return null;
     }
@@ -142,7 +148,7 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         final String type = getTypeAsString(n.f0);
         final String id = n.f1.f0.toString();
 
-        symt.put(keyPrefix + "." + id, type);
+        currentMethod.addParameter(id, type);
 
         return null;
     }
@@ -152,8 +158,11 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
 
         String id = n.f1.f0.tokenImage;
 
-        // FIXME: Error if key already exists
-        symt.put(keyPrefix + "." + id, type);
+        if (currentMethod != null) {
+            currentMethod.addLocalVariable(id, type);
+        } else {
+            currentClass.addField(id, type);
+        }
 
         return null;
     }
@@ -162,7 +171,6 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         final String prefix = keyPrefix;
         keyPrefix += "." + argu;
 
-        // TODO: Decide how to number blocks if necessary
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
         n.f2.accept(this, argu);

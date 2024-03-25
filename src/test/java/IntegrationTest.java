@@ -17,7 +17,8 @@ public class IntegrationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort", "LinearSearch", "LinkedList", "QuickSort" })
+    @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort", "LinearSearch", "LinkedList", "QuickSort",
+            "TreeVisitor", "MoreThan4" })
     public void asdjfgf(String file) {
         final String filename = "programs/java/" + file + ".java";
         try (FileInputStream fStream = new FileInputStream(filename);) {
@@ -39,7 +40,7 @@ public class IntegrationTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort", "LinearSearch", "LinkedList", "QuickSort",
-            "TreeVisitor" })
+            "TreeVisitor", "TreeVisitor", "MoreThan4" })
     public void asdjfgf2(String file) {
         final String filename = "programs/java/" + file + "-error.java";
         try (FileInputStream fStream = new FileInputStream(filename);) {
