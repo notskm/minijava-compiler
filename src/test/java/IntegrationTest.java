@@ -6,8 +6,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import picojava.SymTableVis;
-import picojava.TypeCheckSimp;
+import minijava.SymTableVis;
+import minijava.TypeCheckSimp;
 import syntaxtree.Node;
 
 public class IntegrationTest {

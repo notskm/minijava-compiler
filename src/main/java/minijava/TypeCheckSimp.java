@@ -1,10 +1,10 @@
-package picojava;
+package minijava;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import picojava.SymbolTable.ClassBinding;
-import picojava.SymbolTable.MethodBinding;
+import minijava.SymbolTable.ClassBinding;
+import minijava.SymbolTable.MethodBinding;
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 

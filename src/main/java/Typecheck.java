@@ -1,4 +1,4 @@
-import picojava.*;
+import minijava.*;
 import syntaxtree.*;
 
 public class Typecheck {

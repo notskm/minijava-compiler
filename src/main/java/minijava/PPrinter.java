@@ -1,4 +1,4 @@
-package picojava;
+package minijava;
 
 import syntaxtree.*;
 import visitor.GJDepthFirst;

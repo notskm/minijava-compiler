@@ -1,4 +1,4 @@
-package picojava;
+package minijava;
 
 import java.util.HashMap;
 import java.util.Iterator;
