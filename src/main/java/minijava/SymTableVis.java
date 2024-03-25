@@ -8,15 +8,11 @@ import visitor.GJDepthFirst;
 public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
     public SymbolTable symt = new SymbolTable();
 
-    private String keyPrefix = "Global";
     ClassBinding currentClass = null;
     MethodBinding currentMethod = null;
 
     @Override
     public R visit(MainClass n, A argu) {
-        final String prefix = keyPrefix;
-        keyPrefix += "." + n.f1.f0.toString();
-
         final String className = n.f1.f0.tokenImage;
         final String mainMethodName = n.f6.tokenImage;
         final String argumentName = n.f11.f0.toString();
@@ -53,7 +49,6 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         n.f16.accept(this, argu);
         n.f17.accept(this, argu);
 
-        keyPrefix = prefix;
         currentClass = null;
         currentMethod = null;
         return null;
@@ -61,9 +56,6 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
 
     @Override
     public R visit(ClassDeclaration n, A argu) {
-        final String prefix = keyPrefix;
-        keyPrefix += "." + n.f1.f0.toString();
-
         final String className = n.f1.f0.tokenImage;
 
         symt.addClass(className);
@@ -76,16 +68,12 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         n.f4.accept(this, argu);
         n.f5.accept(this, argu);
 
-        keyPrefix = prefix;
         currentClass = null;
         return null;
     }
 
     @Override
     public R visit(ClassExtendsDeclaration n, A argu) {
-        String prefix = keyPrefix;
-        keyPrefix += "." + n.f1.f0.toString();
-
         final String className = n.f1.f0.tokenImage;
         final String baseClass = n.f3.f0.tokenImage;
 
@@ -102,7 +90,6 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         n.f6.accept(this, argu);
         n.f7.accept(this, argu);
 
-        keyPrefix = prefix;
         currentClass = null;
 
         return null;
@@ -111,16 +98,12 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
     @Override
     public R visit(MethodDeclaration n, A argu) {
         final String methodName = n.f2.f0.toString() + "()";
-        final String methodKey = keyPrefix + "." + methodName;
 
         // FIXME: Error if key already exists
 
         currentClass.addMethod(methodName);
         currentMethod = currentClass.getMethod(methodName);
         currentMethod.setReturnType(getTypeAsString(n.f1));
-
-        final String prefix = keyPrefix;
-        keyPrefix = methodKey;
 
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
@@ -135,8 +118,6 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         n.f10.accept(this, argu);
         n.f11.accept(this, argu);
         n.f12.accept(this, argu);
-
-        keyPrefix = prefix;
 
         currentMethod = null;
 
@@ -168,14 +149,9 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
     }
 
     public R visit(Block n, A argu) {
-        final String prefix = keyPrefix;
-        keyPrefix += "." + argu;
-
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
         n.f2.accept(this, argu);
-
-        keyPrefix = prefix;
 
         return null;
     }
@@ -194,10 +170,5 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
                 // FIXME: Should we produce an error?
                 return "";
         }
-    }
-
-    // For testing
-    void setPrefix(String prefix) {
-        keyPrefix = prefix;
     }
 }
