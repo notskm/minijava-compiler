@@ -2,7 +2,9 @@ import minijava.*;
 import syntaxtree.*;
 
 public class Typecheck {
-    public static void main(String[] args) {
+    public SymbolTable symt;
+
+    public boolean check() {
         try {
             new MiniJavaParser(System.in);
             Node root = MiniJavaParser.Goal();
@@ -11,17 +13,27 @@ public class Typecheck {
 
             SymTableVis<Void, Integer> vis = new SymTableVis<>();
             root.accept(vis, 0);
+            symt = vis.symt;
 
             TypeCheckSimp check = new TypeCheckSimp();
             final String output = root.accept(check, vis.symt);
             System.out.println(output);
             if (output.equals("error")) {
-                System.out.println("Type error");
+                return false;
             } else {
-                System.out.println("Program type checked successfully");
+                return true;
             }
         } catch (ParseException e) {
-            System.err.println("Error! " + e.getMessage());
+            return false;
+        }
+    };
+
+    public static void main(String[] args) {
+        Typecheck typechecker = new Typecheck();
+        if (typechecker.check()) {
+            System.out.println("Program type checked successfully");
+        } else {
+            System.out.println("Type error");
         }
     }
 }
