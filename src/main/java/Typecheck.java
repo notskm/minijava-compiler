@@ -3,11 +3,12 @@ import syntaxtree.*;
 
 public class Typecheck {
     public SymbolTable symt;
+    public Node root;
 
     public boolean check() {
         try {
             new MiniJavaParser(System.in);
-            Node root = MiniJavaParser.Goal();
+            root = MiniJavaParser.Goal();
             PPrinter<Void, String> printer = new PPrinter<>();
             printer.accept(root);
 
