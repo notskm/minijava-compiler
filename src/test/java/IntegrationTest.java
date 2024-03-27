@@ -19,7 +19,7 @@ public class IntegrationTest {
     @ParameterizedTest
     @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort", "LinearSearch", "LinkedList", "QuickSort",
             "TreeVisitor", "MoreThan4" })
-    public void asdjfgf(String file) {
+    public void testTypecheckingValidPrograms(String file) {
         final String filename = "programs/java/" + file + ".java";
         try (FileInputStream fStream = new FileInputStream(filename);) {
             MiniJavaParser.ReInit(fStream);
@@ -40,8 +40,8 @@ public class IntegrationTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort", "LinearSearch", "LinkedList", "QuickSort",
-            "TreeVisitor", "TreeVisitor", "MoreThan4" })
-    public void asdjfgf2(String file) {
+            "TreeVisitor", "TreeVisitor", "MoreThan4", "NoOverloading" })
+    public void testTypecheckingInvalidPrograms(String file) {
         final String filename = "programs/java/" + file + "-error.java";
         try (FileInputStream fStream = new FileInputStream(filename);) {
             MiniJavaParser.ReInit(fStream);
