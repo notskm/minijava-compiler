@@ -140,6 +140,16 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         return null;
     }
 
+    public Void visit(CompareExpression n, SymbolTable symt) {
+        methodString += "LtS(";
+        n.f0.accept(this, symt);
+        methodString += " ";
+        n.f2.accept(this, symt);
+        methodString += ")";
+
+        return null;
+    }
+
     private String indent(String str) {
         String indented = "";
 
