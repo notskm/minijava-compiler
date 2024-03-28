@@ -17,6 +17,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     private ClassBinding currentClass = null;
     private String methodString = "";
     private int indentLevel = 0;
+    private int tempVariableNumber = 0;
+    private int ifLabelNumber = 0;
 
     public String toVapor() {
         String program = "";
@@ -137,6 +139,33 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     public Void visit(Identifier n, SymbolTable symt) {
         methodString += n.f0.tokenImage;
+        return null;
+    }
+
+    public Void visit(IfStatement n, SymbolTable symt) {
+        final String temp = "t." + tempVariableNumber;
+        final String elseLabel = ":if" + ifLabelNumber + "else";
+        final String endLabel = ":if" + ifLabelNumber + "end";
+
+        ifLabelNumber++;
+
+        methodString += indent(temp + " = ");
+        n.f2.accept(this, symt);
+        methodString += "\n";
+
+        methodString += indent("if0 " + temp + " goto " + elseLabel + "\n");
+        indentLevel++;
+        n.f4.accept(this, symt);
+        methodString += indent("goto " + endLabel + "\n");
+        indentLevel--;
+
+        methodString += indent(elseLabel + "\n");
+        indentLevel++;
+        n.f6.accept(this, symt);
+        indentLevel--;
+
+        methodString += indent(endLabel + "\n");
+
         return null;
     }
 
