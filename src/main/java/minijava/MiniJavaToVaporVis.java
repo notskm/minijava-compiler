@@ -91,17 +91,25 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     }
 
     public Void visit(MethodDeclaration n, SymbolTable symt) {
-        final String methodName = n.f2.f0.tokenImage;
         final String className = currentClass.getName();
+        final String methodName = n.f2.f0.tokenImage;
 
         methodTables.get(currentClass.getName()).add(methodName);
 
-        methodString += "func " + className + "." + methodName + "\n";
+        methodString += "func " + className + ".";
+        n.f2.accept(this, symt);
+        methodString += "(this ";
+        n.f4.accept(this, symt);
+        methodString += ")\n";
+
         indentLevel++;
 
-        super.visit(n, symt);
+        n.f7.accept(this, symt);
+        n.f8.accept(this, symt);
 
-        methodString += indent("ret");
+        methodString += indent("ret ");
+
+        n.f10.accept(this, symt);
 
         methods.add(methodString);
         methodString = "";
@@ -116,8 +124,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     }
 
     public Void visit(AssignmentStatement n, SymbolTable symt) {
-        final String variableName = n.f0.f0.tokenImage;
-        methodString += indent(variableName + " = ");
+        methodString += indent("");
         super.visit(n, symt);
         methodString += "\n";
         return null;
