@@ -109,6 +109,10 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         return null;
     }
 
+    public Void visit(VarDeclaration n, SymbolTable symt) {
+        return null;
+    }
+
     public Void visit(AssignmentStatement n, SymbolTable symt) {
         final String variableName = n.f0.f0.tokenImage;
         methodString += indent(variableName + " = ");
