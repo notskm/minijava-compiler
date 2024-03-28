@@ -12,11 +12,16 @@ import visitor.GJDepthFirst;
 
 public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     public Map<String, List<String>> methodTables = new LinkedHashMap<>();
+    public List<String> methods = new ArrayList<>();
+
     private ClassBinding currentClass = null;
+    private String methodString = "";
+    private int indentLevel = 0;
 
     public String toVapor() {
         String program = "";
         program += methodTablesToVapor();
+        program += methodsToVapor();
         return program;
     }
 
@@ -42,6 +47,27 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         return table;
     }
 
+    public String methodsToVapor() {
+        return String.join("\n\n", methods);
+    }
+
+    public Void visit(MainClass n, SymbolTable symt) {
+        currentClass = symt.getClassBinding(n.f1.f0.tokenImage);
+        methodString += "func Main()\n";
+        indentLevel++;
+
+        super.visit(n, symt);
+
+        methodString += " ret";
+
+        methods.add(methodString);
+        methodString = "";
+
+        indentLevel--;
+
+        return null;
+    }
+
     public Void visit(ClassDeclaration n, SymbolTable symt) {
         currentClass = symt.getClassBinding(n.f1.f0.tokenImage);
         addClassToMethodTables(n.f1);
@@ -64,7 +90,32 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     public Void visit(MethodDeclaration n, SymbolTable symt) {
         final String methodName = n.f2.f0.tokenImage;
+        final String className = currentClass.getName();
+
         methodTables.get(currentClass.getName()).add(methodName);
+
+        methodString += "func " + className + "." + methodName + "\n";
+        indentLevel++;
+
+        super.visit(n, symt);
+
+        methodString += indent("ret");
+
+        methods.add(methodString);
+        methodString = "";
+
+        indentLevel--;
+
         return null;
+    }
+
+    private String indent(String str) {
+        String indented = "";
+
+        for (int i = 0; i < indentLevel * 2; i++) {
+            indented += " ";
+        }
+
+        return indented + str;
     }
 }
