@@ -19,6 +19,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     private int indentLevel = 0;
     private int tempVariableNumber = 0;
     private int ifLabelNumber = 0;
+    private int nullLabelNumber = 1;
 
     public String toVapor() {
         String program = "";
@@ -117,6 +118,26 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         methodString = "";
 
         endScope();
+
+        return null;
+    }
+
+    public Void visit(AllocationExpression n, SymbolTable argu) {
+        final String className = n.f1.f0.tokenImage;
+        final int bytes = argu.getClassBinding(className).getSizeInBytes() + 4;
+        final String tempVar = "t." + tempVariableNumber;
+        final String nullLabel = "null" + nullLabelNumber;
+
+        tempVariableNumber++;
+        nullLabelNumber++;
+
+        methodString += indent(tempVar + " = HeapAllocZ(" + bytes + ")\n");
+        methodString += indent("[" + tempVar + "] = :vmt_" + className + "\n");
+        methodString += indent("if " + tempVar + " goto :" + nullLabel + "\n");
+        beginIndent();
+        methodString += indent("Error(\"null pointer\")\n");
+        endIndent();
+        methodString += indent("null1:\n");
 
         return null;
     }

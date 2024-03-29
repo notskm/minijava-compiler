@@ -71,6 +71,17 @@ public class SymbolTable {
             }
         }
 
+        public int getSizeInBytes() {
+            final int thisSize = fields.size();
+
+            ClassBinding baseClassBinding = table.getClassBinding(baseClass);
+            if (baseClassBinding != null) {
+                return thisSize + baseClassBinding.getSizeInBytes();
+            } else {
+                return thisSize * 4;
+            }
+        }
+
         public void setBaseClass(String name) {
             baseClass = name;
         }
