@@ -18,7 +18,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     private String methodString = "";
     private int indentLevel = 0;
     private int tempVariableNumber = 0;
-    private int ifLabelNumber = 0;
+    private int ifLabelNumber = 1;
     private int nullLabelNumber = 1;
 
     public String toVapor() {
@@ -167,8 +167,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     public Void visit(IfStatement n, SymbolTable symt) {
         final String temp = "t." + tempVariableNumber;
-        final String elseLabel = ":if" + ifLabelNumber + "else";
-        final String endLabel = ":if" + ifLabelNumber + "end";
+        final String elseLabel = "if" + ifLabelNumber + "_else";
+        final String endLabel = "if" + ifLabelNumber + "_end";
 
         ifLabelNumber++;
 
@@ -176,18 +176,18 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         n.f2.accept(this, symt);
         methodString += "\n";
 
-        methodString += indent("if0 " + temp + " goto " + elseLabel + "\n");
+        methodString += indent("if0 " + temp + " goto :" + elseLabel + "\n");
         beginIndent();
         n.f4.accept(this, symt);
-        methodString += indent("goto " + endLabel + "\n");
+        methodString += indent("goto :" + endLabel + "\n");
         endIndent();
 
-        methodString += indent(elseLabel + "\n");
+        methodString += indent(elseLabel + ":\n");
         beginIndent();
         n.f6.accept(this, symt);
         endIndent();
 
-        methodString += indent(endLabel + "\n");
+        methodString += indent(endLabel + ":\n");
 
         return null;
     }
@@ -226,7 +226,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     private void endScope() {
         tempVariableNumber = 0;
-        ifLabelNumber = 0;
+        ifLabelNumber = 1;
         endIndent();
     }
 }
