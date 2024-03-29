@@ -56,7 +56,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     public Void visit(MainClass n, SymbolTable symt) {
         currentClass = symt.getClassBinding(n.f1.f0.tokenImage);
         methodString += "func Main()\n";
-        indentLevel++;
+        beginScope();
         n.f14.accept(this, symt);
         n.f15.accept(this, symt);
         methodString += "\n";
@@ -65,7 +65,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         methods.add(methodString);
         methodString = "";
 
-        indentLevel--;
+        endScope();
 
         return null;
     }
@@ -104,7 +104,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         n.f4.accept(this, symt);
         methodString += ")\n";
 
-        indentLevel++;
+        beginScope();
 
         n.f7.accept(this, symt);
         n.f8.accept(this, symt);
@@ -116,7 +116,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         methods.add(methodString);
         methodString = "";
 
-        indentLevel--;
+        endScope();
 
         return null;
     }
@@ -154,15 +154,15 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         methodString += "\n";
 
         methodString += indent("if0 " + temp + " goto " + elseLabel + "\n");
-        indentLevel++;
+        beginIndent();
         n.f4.accept(this, symt);
         methodString += indent("goto " + endLabel + "\n");
-        indentLevel--;
+        endIndent();
 
         methodString += indent(elseLabel + "\n");
-        indentLevel++;
+        beginIndent();
         n.f6.accept(this, symt);
-        indentLevel--;
+        endIndent();
 
         methodString += indent(endLabel + "\n");
 
@@ -187,5 +187,23 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         }
 
         return indented + str;
+    }
+
+    private void beginIndent() {
+        indentLevel++;
+    }
+
+    private void endIndent() {
+        indentLevel--;
+    }
+
+    private void beginScope() {
+        beginIndent();
+    }
+
+    private void endScope() {
+        tempVariableNumber = 0;
+        ifLabelNumber = 0;
+        endIndent();
     }
 }
