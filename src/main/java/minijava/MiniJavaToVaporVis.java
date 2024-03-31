@@ -1,7 +1,6 @@
 package minijava;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -11,7 +10,7 @@ import syntaxtree.*;
 import visitor.GJDepthFirst;
 
 public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
-    public Map<String, List<String>> methodTables = new LinkedHashMap<>();
+    public Map<String, List<String>> methodTables;
     public List<String> methods = new ArrayList<>();
 
     private ClassBinding currentClass = null;
@@ -20,6 +19,10 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     private int tempVariableNumber = 0;
     private int ifLabelNumber = 1;
     private int nullLabelNumber = 1;
+
+    public MiniJavaToVaporVis(Map<String, List<String>> methodTable) {
+        methodTables = methodTable;
+    }
 
     public String toVapor() {
         String program = "";
@@ -73,7 +76,6 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     public Void visit(ClassDeclaration n, SymbolTable symt) {
         currentClass = symt.getClassBinding(n.f1.f0.tokenImage);
-        addClassToMethodTables(n.f1);
         n.f3.accept(this, symt);
         n.f4.accept(this, symt);
         currentClass = null;
@@ -82,22 +84,14 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     public Void visit(ClassExtendsDeclaration n, SymbolTable symt) {
         currentClass = symt.getClassBinding(n.f1.f0.tokenImage);
-        addClassToMethodTables(n.f1);
         n.f5.accept(this, symt);
         n.f6.accept(this, symt);
         currentClass = null;
         return null;
     }
 
-    private void addClassToMethodTables(Identifier classId) {
-        methodTables.put(classId.f0.tokenImage, new ArrayList<>());
-    }
-
     public Void visit(MethodDeclaration n, SymbolTable symt) {
         final String className = currentClass.getName();
-        final String methodName = n.f2.f0.tokenImage;
-
-        methodTables.get(currentClass.getName()).add(methodName);
 
         methodString += "func " + className + ".";
         n.f2.accept(this, symt);
