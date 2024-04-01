@@ -11,8 +11,8 @@ public class Typecheck {
     }
 
     private void printAST() {
-        PPrinter<Void, String> printer = new PPrinter<>();
-        printer.accept(root);
+        PPrinter printer = new PPrinter();
+        root.accept(printer);
     }
 
     private boolean typecheck() {

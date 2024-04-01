@@ -1,422 +1,375 @@
 package minijava;
 
 import syntaxtree.*;
-import visitor.GJDepthFirst;
+import visitor.DepthFirstVisitor;
 
-public class PPrinter<R, A> extends GJDepthFirst<R, A> {
+public class PPrinter extends DepthFirstVisitor {
     private int indent = 0;
 
-    public void accept(Node node) {
-        node.accept(this, null);
-    }
-
-    public R visit(NodeToken n, A argu) {
+    public void visit(NodeToken n) {
         printIndent();
         System.out.print(n.getClass().getSimpleName());
         System.out.print(" => ");
         System.out.println(n.toString());
-        return null;
     }
 
-    public R visit(Goal n, A argu) {
+    public void visit(Goal n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(MainClass n, A argu) {
+    public void visit(MainClass n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
-        n.f6.accept(this, argu);
-        n.f7.accept(this, argu);
-        n.f8.accept(this, argu);
-        n.f9.accept(this, argu);
-        n.f10.accept(this, argu);
-        n.f11.accept(this, argu);
-        n.f12.accept(this, argu);
-        n.f13.accept(this, argu);
-        n.f14.accept(this, argu);
-        n.f15.accept(this, argu);
-        n.f16.accept(this, argu);
-        n.f17.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
+        n.f5.accept(this);
+        n.f6.accept(this);
+        n.f7.accept(this);
+        n.f8.accept(this);
+        n.f9.accept(this);
+        n.f10.accept(this);
+        n.f11.accept(this);
+        n.f12.accept(this);
+        n.f13.accept(this);
+        n.f14.accept(this);
+        n.f15.accept(this);
+        n.f16.accept(this);
+        n.f17.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(TypeDeclaration n, A argu) {
+    public void visit(TypeDeclaration n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(ClassDeclaration n, A argu) {
+    public void visit(ClassDeclaration n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
+        n.f5.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(ClassExtendsDeclaration n, A argu) {
+    public void visit(ClassExtendsDeclaration n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
-        n.f6.accept(this, argu);
-        n.f7.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
+        n.f5.accept(this);
+        n.f6.accept(this);
+        n.f7.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(VarDeclaration n, A argu) {
+    public void visit(VarDeclaration n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(MethodDeclaration n, A argu) {
+    public void visit(MethodDeclaration n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
-        n.f6.accept(this, argu);
-        n.f7.accept(this, argu);
-        n.f8.accept(this, argu);
-        n.f9.accept(this, argu);
-        n.f10.accept(this, argu);
-        n.f11.accept(this, argu);
-        n.f12.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
+        n.f5.accept(this);
+        n.f6.accept(this);
+        n.f7.accept(this);
+        n.f8.accept(this);
+        n.f9.accept(this);
+        n.f10.accept(this);
+        n.f11.accept(this);
+        n.f12.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(FormalParameterList n, A argu) {
+    public void visit(FormalParameterList n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(FormalParameter n, A argu) {
+    public void visit(FormalParameter n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(FormalParameterRest n, A argu) {
+    public void visit(FormalParameterRest n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(Type n, A argu) {
+    public void visit(Type n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(ArrayType n, A argu) {
+    public void visit(ArrayType n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(BooleanType n, A argu) {
+    public void visit(BooleanType n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(IntegerType n, A argu) {
+    public void visit(IntegerType n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(Statement n, A argu) {
+    public void visit(Statement n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(Block n, A argu) {
+    public void visit(Block n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(AssignmentStatement n, A argu) {
+    public void visit(AssignmentStatement n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(ArrayAssignmentStatement n, A argu) {
+    public void visit(ArrayAssignmentStatement n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
-        n.f6.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
+        n.f5.accept(this);
+        n.f6.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(IfStatement n, A argu) {
+    public void visit(IfStatement n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
-        n.f6.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
+        n.f5.accept(this);
+        n.f6.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(WhileStatement n, A argu) {
+    public void visit(WhileStatement n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(PrintStatement n, A argu) {
+    public void visit(PrintStatement n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(Expression n, A argu) {
+    public void visit(Expression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(AndExpression n, A argu) {
+    public void visit(AndExpression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(CompareExpression n, A argu) {
+    public void visit(CompareExpression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(PlusExpression n, A argu) {
+    public void visit(PlusExpression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(MinusExpression n, A argu) {
+    public void visit(MinusExpression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(TimesExpression n, A argu) {
+    public void visit(TimesExpression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(ArrayLookup n, A argu) {
+    public void visit(ArrayLookup n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(ArrayLength n, A argu) {
+    public void visit(ArrayLength n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(MessageSend n, A argu) {
+    public void visit(MessageSend n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
+        n.f5.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(ExpressionList n, A argu) {
+    public void visit(ExpressionList n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(ExpressionRest n, A argu) {
+    public void visit(ExpressionRest n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(PrimaryExpression n, A argu) {
+    public void visit(PrimaryExpression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(IntegerLiteral n, A argu) {
+    public void visit(IntegerLiteral n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(TrueLiteral n, A argu) {
+    public void visit(TrueLiteral n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(FalseLiteral n, A argu) {
+    public void visit(FalseLiteral n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(Identifier n, A argu) {
+    public void visit(Identifier n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(ThisExpression n, A argu) {
+    public void visit(ThisExpression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
+        n.f0.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(ArrayAllocationExpression n, A argu) {
+    public void visit(ArrayAllocationExpression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(AllocationExpression n, A argu) {
+    public void visit(AllocationExpression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(NotExpression n, A argu) {
+    public void visit(NotExpression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
         indent--;
-        return null;
     }
 
-    public R visit(BracketExpression n, A argu) {
+    public void visit(BracketExpression n) {
         printClassName(n);
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
         indent--;
-        return null;
     }
 
     private void printClassName(Node node) {
