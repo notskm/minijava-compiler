@@ -37,7 +37,6 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         }
 
         for (Node statement : n.f15.nodes) {
-            System.out.println(statement.toString());
             if (statement.accept(this, argu).equals("error")) {
                 return "error";
             }
