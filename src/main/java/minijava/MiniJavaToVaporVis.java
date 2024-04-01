@@ -63,7 +63,6 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         beginScope();
         n.f14.accept(this, symt);
         n.f15.accept(this, symt);
-        methodString += "\n";
         methodString += "ret";
 
         methods.add(methodString);
@@ -92,21 +91,25 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     public Void visit(MethodDeclaration n, SymbolTable symt) {
         final String className = currentClass.getName();
+        final String methodName = n.f2.f0.tokenImage;
 
-        methodString += "func " + className + ".";
-        n.f2.accept(this, symt);
-        methodString += "(this ";
         n.f4.accept(this, symt);
-        methodString += ")\n";
+        String arguments = "this";
+
+        if (!arguments.isEmpty()) {
+            arguments += " " + expressionVariable;
+        }
+
+        methodString += "func " + className + "." + methodName + "(" + arguments + ")\n";
 
         beginScope();
 
         n.f7.accept(this, symt);
         n.f8.accept(this, symt);
 
-        methodString += indent("ret ");
-
         n.f10.accept(this, symt);
+        final String returnVar = expressionVariable;
+        methodString += indent("ret " + returnVar);
 
         methods.add(methodString);
         methodString = "";
@@ -115,6 +118,9 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
         return null;
     }
+
+    private String expressionVariable = "";
+    private String expressionVariableType = "";
 
     public Void visit(AllocationExpression n, SymbolTable argu) {
         final String className = n.f1.f0.tokenImage;
@@ -133,6 +139,9 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         endIndent();
         methodString += indent("null1:\n");
 
+        expressionVariable = tempVar;
+        expressionVariableType = className;
+
         return null;
     }
 
@@ -141,36 +150,34 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     }
 
     public Void visit(AssignmentStatement n, SymbolTable symt) {
-        methodString += indent("");
-        n.f0.accept(this, symt);
-        methodString += " = ";
         n.f2.accept(this, symt);
+
+        methodString += indent(n.f0.f0.tokenImage + " = " + expressionVariable);
         methodString += "\n";
         return null;
     }
 
     public Void visit(IntegerLiteral n, SymbolTable symt) {
-        methodString += n.f0.tokenImage;
+        expressionVariable = n.f0.tokenImage;
+        expressionVariableType = "Int";
         return null;
     }
 
     public Void visit(Identifier n, SymbolTable symt) {
-        methodString += n.f0.tokenImage;
+        expressionVariable = n.f0.tokenImage;
+        expressionVariableType = "";
         return null;
     }
 
     public Void visit(IfStatement n, SymbolTable symt) {
-        final String temp = "t." + tempVariableNumber;
         final String elseLabel = "if" + ifLabelNumber + "_else";
         final String endLabel = "if" + ifLabelNumber + "_end";
 
         ifLabelNumber++;
 
-        methodString += indent(temp + " = ");
         n.f2.accept(this, symt);
-        methodString += "\n";
 
-        methodString += indent("if0 " + temp + " goto :" + elseLabel + "\n");
+        methodString += indent("if0 " + expressionVariable + " goto :" + elseLabel + "\n");
         beginIndent();
         n.f4.accept(this, symt);
         methodString += indent("goto :" + endLabel + "\n");
@@ -186,12 +193,84 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         return null;
     }
 
-    public Void visit(CompareExpression n, SymbolTable symt) {
-        methodString += "LtS(";
+    public Void visit(PrimaryExpression n, SymbolTable symt) {
+        return n.f0.accept(this, symt);
+    }
+
+    public Void visit(ThisExpression n, SymbolTable symt) {
+        expressionVariable = "this";
+        expressionVariableType = currentClass.getName();
+        return null;
+    }
+
+    public Void visit(ExpressionList n, SymbolTable symt) {
         n.f0.accept(this, symt);
-        methodString += " ";
+        final String before = expressionVariable;
+        expressionVariable = "";
+
+        n.f1.accept(this, symt);
+        final String after = expressionVariable;
+        expressionVariable = before;
+
+        if (!after.isEmpty()) {
+            expressionVariable += after;
+        }
+
+        expressionVariableType = "";
+
+        return null;
+    }
+
+    public Void visit(ExpressionRest n, SymbolTable symt) {
+        final String before = expressionVariable;
+        expressionVariable = "";
+
+        n.f1.accept(this, symt);
+        final String after = expressionVariable;
+        expressionVariable = before;
+
+        if (!after.isEmpty()) {
+            expressionVariable += " " + expressionVariable;
+        }
+
+        return null;
+    }
+
+    public Void visit(MessageSend n, SymbolTable symt) {
+        n.f0.accept(this, symt);
+
+        final String expressionVar = expressionVariable;
+        final String methodName = n.f2.f0.tokenImage;
+        final int methodIndex = methodTables.get(expressionVariableType).indexOf(methodName);
+        final String methodVar = "t." + tempVariableNumber;
+        tempVariableNumber++;
+
+        methodString += indent(methodVar + " = [" + expressionVar + "]\n");
+        methodString += indent(methodVar + " = [" + methodVar + "+" + methodIndex + "]\n");
+
+        n.f4.accept(this, symt);
+        String arguments = expressionVar;
+        if (!expressionVariable.isEmpty()) {
+            arguments += " " + expressionVariable;
+        }
+
+        methodString += indent("call " + methodVar + "(" + arguments + ")\n");
+
+        return null;
+    }
+
+    public Void visit(CompareExpression n, SymbolTable symt) {
+        n.f0.accept(this, symt);
+        final String lhs = expressionVariable;
+
         n.f2.accept(this, symt);
-        methodString += ")";
+        final String rhs = expressionVariable;
+
+        final String tempVar = "t." + tempVariableNumber;
+        methodString += indent(tempVar + " = LtS(" + lhs + " " + rhs + ")\n");
+
+        expressionVariable = tempVar;
+        expressionVariableType = "Boolean";
 
         return null;
     }
