@@ -16,8 +16,8 @@ public class Typecheck {
     }
 
     private boolean typecheck() {
-        SymTableVis<Void, Integer> vis = new SymTableVis<>();
-        root.accept(vis, 0);
+        SymTableVis vis = new SymTableVis();
+        root.accept(vis);
         symt = vis.symt;
 
         TypeCheckSimp check = new TypeCheckSimp();

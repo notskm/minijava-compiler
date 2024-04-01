@@ -3,16 +3,16 @@ package minijava;
 import minijava.SymbolTable.ClassBinding;
 import minijava.SymbolTable.MethodBinding;
 import syntaxtree.*;
-import visitor.GJDepthFirst;
+import visitor.DepthFirstVisitor;
 
-public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
+public class SymTableVis extends DepthFirstVisitor {
     public SymbolTable symt = new SymbolTable();
 
     ClassBinding currentClass = null;
     MethodBinding currentMethod = null;
 
     @Override
-    public R visit(MainClass n, A argu) {
+    public void visit(MainClass n) {
         final String className = n.f1.f0.tokenImage;
         final String mainMethodName = n.f6.tokenImage;
         final String argumentName = n.f11.f0.toString();
@@ -30,50 +30,48 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         currentClass = mainClass;
         currentMethod = mainMethod;
 
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
-        n.f6.accept(this, argu);
-        n.f7.accept(this, argu);
-        n.f8.accept(this, argu);
-        n.f9.accept(this, argu);
-        n.f10.accept(this, argu);
-        n.f11.accept(this, argu);
-        n.f12.accept(this, argu);
-        n.f13.accept(this, argu);
-        n.f14.accept(this, argu);
-        n.f15.accept(this, argu);
-        n.f16.accept(this, argu);
-        n.f17.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
+        n.f5.accept(this);
+        n.f6.accept(this);
+        n.f7.accept(this);
+        n.f8.accept(this);
+        n.f9.accept(this);
+        n.f10.accept(this);
+        n.f11.accept(this);
+        n.f12.accept(this);
+        n.f13.accept(this);
+        n.f14.accept(this);
+        n.f15.accept(this);
+        n.f16.accept(this);
+        n.f17.accept(this);
 
         currentClass = null;
         currentMethod = null;
-        return null;
     }
 
     @Override
-    public R visit(ClassDeclaration n, A argu) {
+    public void visit(ClassDeclaration n) {
         final String className = n.f1.f0.tokenImage;
 
         symt.addClass(className);
         currentClass = symt.getClassBinding(className);
 
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
+        n.f5.accept(this);
 
         currentClass = null;
-        return null;
     }
 
     @Override
-    public R visit(ClassExtendsDeclaration n, A argu) {
+    public void visit(ClassExtendsDeclaration n) {
         final String className = n.f1.f0.tokenImage;
         final String baseClass = n.f3.f0.tokenImage;
 
@@ -81,22 +79,20 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         currentClass = symt.getClassBinding(className);
         currentClass.setBaseClass(baseClass);
 
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
-        n.f6.accept(this, argu);
-        n.f7.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
+        n.f5.accept(this);
+        n.f6.accept(this);
+        n.f7.accept(this);
 
         currentClass = null;
-
-        return null;
     }
 
     @Override
-    public R visit(MethodDeclaration n, A argu) {
+    public void visit(MethodDeclaration n) {
         final String methodName = n.f2.f0.toString() + "()";
 
         // FIXME: Error if key already exists
@@ -105,36 +101,31 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         currentMethod = currentClass.getMethod(methodName);
         currentMethod.setReturnType(getTypeAsString(n.f1));
 
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-        n.f3.accept(this, argu);
-        n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
-        n.f6.accept(this, argu);
-        n.f7.accept(this, argu);
-        n.f8.accept(this, argu);
-        n.f9.accept(this, argu);
-        n.f10.accept(this, argu);
-        n.f11.accept(this, argu);
-        n.f12.accept(this, argu);
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
+        n.f3.accept(this);
+        n.f4.accept(this);
+        n.f5.accept(this);
+        n.f6.accept(this);
+        n.f7.accept(this);
+        n.f8.accept(this);
+        n.f9.accept(this);
+        n.f10.accept(this);
+        n.f11.accept(this);
+        n.f12.accept(this);
 
         currentMethod = null;
-
-        return null;
     }
 
     @Override
-    public R visit(FormalParameter n, A argu) {
+    public void visit(FormalParameter n) {
         final String type = getTypeAsString(n.f0);
         final String id = n.f1.f0.toString();
-
         currentMethod.addParameter(id, type);
-
-        return null;
     }
 
-    public R visit(VarDeclaration n, A argu) {
+    public void visit(VarDeclaration n) {
         String type = getTypeAsString(n.f0);
 
         String id = n.f1.f0.tokenImage;
@@ -144,16 +135,12 @@ public class SymTableVis<R, A> extends GJDepthFirst<R, A> {
         } else {
             currentClass.addField(id, type);
         }
-
-        return null;
     }
 
-    public R visit(Block n, A argu) {
-        n.f0.accept(this, argu);
-        n.f1.accept(this, argu);
-        n.f2.accept(this, argu);
-
-        return null;
+    public void visit(Block n) {
+        n.f0.accept(this);
+        n.f1.accept(this);
+        n.f2.accept(this);
     }
 
     private String getTypeAsString(Type n) {
