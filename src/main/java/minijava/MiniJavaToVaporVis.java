@@ -25,9 +25,11 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     }
 
     public String toVapor() {
-        String program = "";
+        String program = "\n";
         program += methodTablesToVapor();
+        program += "\n";
         program += methodsToVapor();
+        program += "\n";
         return program;
     }
 
@@ -63,7 +65,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         beginScope();
         n.f14.accept(this, symt);
         n.f15.accept(this, symt);
-        methodString += "ret";
+        methodString += indent("ret");
 
         methods.add(methodString);
         methodString = "";
@@ -125,10 +127,9 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     public Void visit(AllocationExpression n, SymbolTable argu) {
         final String className = n.f1.f0.tokenImage;
         final int bytes = argu.getClassBinding(className).getSizeInBytes() + 4;
-        final String tempVar = "t." + tempVariableNumber;
+        final String tempVar = newTempVariable();
         final String nullLabel = "null" + nullLabelNumber;
 
-        tempVariableNumber++;
         nullLabelNumber++;
 
         methodString += indent(tempVar + " = HeapAllocZ(" + bytes + ")\n");
@@ -242,8 +243,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         final String expressionVar = expressionVariable;
         final String methodName = n.f2.f0.tokenImage;
         final int methodIndex = methodTables.get(expressionVariableType).indexOf(methodName);
-        final String methodVar = "t." + tempVariableNumber;
-        tempVariableNumber++;
+        final String methodVar = newTempVariable();
 
         methodString += indent(methodVar + " = [" + expressionVar + "]\n");
         methodString += indent(methodVar + " = [" + methodVar + "+" + methodIndex + "]\n");
@@ -254,7 +254,9 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
             arguments += " " + expressionVariable;
         }
 
-        methodString += indent("call " + methodVar + "(" + arguments + ")\n");
+        final String tempVar = newTempVariable();
+        methodString += indent(tempVar + " = call " + methodVar + "(" + arguments + ")\n");
+        expressionVariable = tempVar;
 
         return null;
     }
@@ -266,12 +268,46 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         n.f2.accept(this, symt);
         final String rhs = expressionVariable;
 
-        final String tempVar = "t." + tempVariableNumber;
+        final String tempVar = newTempVariable();
         methodString += indent(tempVar + " = LtS(" + lhs + " " + rhs + ")\n");
 
         expressionVariable = tempVar;
         expressionVariableType = "Boolean";
 
+        return null;
+    }
+
+    public Void visit(MinusExpression n, SymbolTable symt) {
+        n.f0.accept(this, symt);
+        final String lhs = expressionVariable;
+
+        n.f2.accept(this, symt);
+        final String rhs = expressionVariable;
+
+        final String tempVar = newTempVariable();
+        methodString += indent(tempVar + " = Sub(" + lhs + " " + rhs + ")\n");
+
+        expressionVariable = tempVar;
+
+        return null;
+    }
+
+    public Void visit(TimesExpression n, SymbolTable symt) {
+        n.f0.accept(this, symt);
+        final String lhs = expressionVariable;
+
+        n.f2.accept(this, symt);
+        final String rhs = expressionVariable;
+
+        expressionVariable = "MulS(" + lhs + " " + rhs + ")";
+        expressionVariableType = "Boolean";
+
+        return null;
+    }
+
+    public Void visit(PrintStatement n, SymbolTable symt) {
+        n.f2.accept(this, symt);
+        methodString += indent("PrintIntS(" + expressionVariable + ")\n");
         return null;
     }
 
@@ -283,6 +319,12 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         }
 
         return indented + str;
+    }
+
+    private String newTempVariable() {
+        final String temp = "t." + tempVariableNumber;
+        tempVariableNumber++;
+        return temp;
     }
 
     private void beginIndent() {
