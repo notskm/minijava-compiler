@@ -20,7 +20,7 @@ public class SymTableVis extends DepthFirstVisitor {
         final String mainType = "(" + argumentType + ") -> " + n.f5.toString();
 
         if (!symt.addClass(className)) {
-            throw new RuntimeException("Class already exists");
+            throw new TypecheckException("Class already exists");
         }
 
         ClassBinding mainClass = symt.getClassBinding(n.f1.f0.tokenImage);
@@ -61,7 +61,7 @@ public class SymTableVis extends DepthFirstVisitor {
         final String className = n.f1.f0.tokenImage;
 
         if (!symt.addClass(className)) {
-            throw new RuntimeException("Class already exists");
+            throw new TypecheckException("Class already exists");
         }
         currentClass = symt.getClassBinding(className);
 
@@ -81,7 +81,7 @@ public class SymTableVis extends DepthFirstVisitor {
         final String baseClass = n.f3.f0.tokenImage;
 
         if (!symt.addClass(className)) {
-            throw new RuntimeException("Class already exists");
+            throw new TypecheckException("Class already exists");
         }
 
         currentClass = symt.getClassBinding(className);
@@ -104,7 +104,7 @@ public class SymTableVis extends DepthFirstVisitor {
         final String methodName = n.f2.f0.toString() + "()";
 
         if (!currentClass.addMethod(methodName)) {
-            throw new RuntimeException("Method already exists");
+            throw new TypecheckException("Method already exists");
         }
 
         currentMethod = currentClass.getMethod(methodName);
@@ -132,7 +132,7 @@ public class SymTableVis extends DepthFirstVisitor {
         final String type = getTypeAsString(n.f0);
         final String id = n.f1.f0.toString();
         if (!currentMethod.addParameter(id, type)) {
-            throw new RuntimeException("Parameter already exists");
+            throw new TypecheckException("Parameter already exists");
         }
     }
 
@@ -143,11 +143,11 @@ public class SymTableVis extends DepthFirstVisitor {
 
         if (currentMethod != null) {
             if (!currentMethod.addLocalVariable(id, type)) {
-                throw new RuntimeException("local variable already exists");
+                throw new TypecheckException("local variable already exists");
             }
         } else {
             if (!currentClass.addField(id, type)) {
-                throw new RuntimeException("Class field already exists");
+                throw new TypecheckException("Class field already exists");
             }
         }
     }
