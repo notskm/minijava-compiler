@@ -2,7 +2,7 @@ import minijava.*;
 import syntaxtree.*;
 
 public class Typecheck {
-    public SymbolTable symt;
+    public SymbolTable symt = new SymbolTable();
     public Node root;
 
     private void parse() throws ParseException {
@@ -22,6 +22,7 @@ public class Typecheck {
         try {
             root.accept(vis);
             root.accept(check, vis.symt);
+            symt = vis.symt;
             return true;
         } catch (TypecheckException e) {
             return false;
