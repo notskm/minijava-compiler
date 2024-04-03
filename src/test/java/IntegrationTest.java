@@ -8,8 +8,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import minijava.MethodTableVis;
-import minijava.MiniJavaToVaporVis;
 import minijava.SymTableVis;
 import minijava.TypeCheckSimp;
 import syntaxtree.Node;
@@ -80,13 +78,7 @@ public class IntegrationTest {
             root.accept(vis);
             root.accept(check, vis.symt);
 
-            final MethodTableVis methodTableVis = new MethodTableVis();
-            root.accept(methodTableVis);
-
-            final MiniJavaToVaporVis m2v = new MiniJavaToVaporVis(methodTableVis.methodTables);
-            root.accept(m2v, vis.symt);
-
-            final String output = m2v.toVapor();
+            final String output = J2V.compileToVapor(root, vis.symt);
 
             assertEquals(streamToString(vapor), output);
         } catch (Exception e) {
