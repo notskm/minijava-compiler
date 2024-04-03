@@ -1,8 +1,5 @@
 package minijava;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import minijava.SymbolTable.ClassBinding;
 import minijava.SymbolTable.MethodBinding;
 import syntaxtree.*;
@@ -48,12 +45,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         currentClass = argu.getClassBinding(className);
 
         n.f3.accept(this, argu);
-
-        // Distinct
-        // n.f4.accept(this, argu);
         n.f4.accept(this, argu);
-
-        n.f5.accept(this, argu);
 
         currentClass = null;
         return "";
@@ -99,7 +91,6 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
 
     @Override
     public String visit(MethodDeclaration n, SymbolTable argu) {
-        // TODO: Replace this with currentMethod.getReturnType()?
         final String returnType = n.f1.accept(this, argu);
         final String methodName = n.f2.f0.tokenImage + "()";
 
@@ -108,9 +99,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
             throw new TypecheckException("Method does not exist");
         }
 
-        // Distinct
         n.f7.accept(this, argu);
-
         n.f8.accept(this, argu);
 
         final String returnExpression = n.f10.accept(this, argu);
@@ -376,7 +365,6 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
 
     public String visit(Identifier n, SymbolTable argu) {
         final String test = n.f0.toString();
-        // final String type = lookupSymbol(currentScope + "." + test, argu);
         final String type = lookupSymbol(test, argu);
         if (type != null) {
             return type;
