@@ -42,7 +42,8 @@ public class IntegrationTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort", "LinearSearch", "LinkedList", "QuickSort",
-            "TreeVisitor", "TreeVisitor", "MoreThan4", "Overloading", "OverloadingInheritance", "OverloadingIndirect" })
+            "TreeVisitor", "TreeVisitor", "MoreThan4", "Overloading", "OverloadingInheritance", "OverloadingIndirect",
+            "DistinctMain", "DistinctClasses" })
     public void testTypecheckingInvalidPrograms(String file) {
         final String filename = "programs/java/" + file + "-error.java";
         try (FileInputStream fStream = new FileInputStream(filename);) {
