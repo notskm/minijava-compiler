@@ -108,21 +108,6 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
             throw new TypecheckException("Method does not exist");
         }
 
-        // Ensure all parameters have distinct IDs
-        // TODO: If this is done in the symbol table, why do it here?
-        if (n.f4.present()) {
-            FormalParameterList parameters = (FormalParameterList) n.f4.node;
-            Set<String> paramSet = new HashSet<>();
-            paramSet.add(parameters.f0.f1.f0.toString());
-            for (Node parameter : parameters.f1.nodes) {
-                parameter.accept(this, argu);
-                FormalParameterRest param = (FormalParameterRest) parameter;
-                if (!paramSet.add(param.f1.f0.toString())) {
-                    throw new TypecheckException("Parameter is not unique");
-                }
-            }
-        }
-
         // Distinct
         n.f7.accept(this, argu);
 
