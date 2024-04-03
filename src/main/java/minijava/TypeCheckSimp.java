@@ -13,7 +13,6 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
     private MethodBinding currentMethod;
 
     public String visit(Goal n, SymbolTable argu) {
-        // Distinct: f0, f1 together
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
         return "";
@@ -26,10 +25,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         currentClass = argu.getClassBinding(className);
         currentMethod = currentClass.getMethod(mainMethodName);
 
-        if (n.f14.present()) {
-            // Distinct, 0 or more, all are real types
-            n.f14.accept(this, argu);
-        }
+        n.f14.accept(this, argu);
 
         n.f15.accept(this, argu);
         n.f16.accept(this, argu);
@@ -51,8 +47,8 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         final String className = n.f1.f0.tokenImage;
         currentClass = argu.getClassBinding(className);
 
-        // Distinct
         n.f3.accept(this, argu);
+
         // Distinct
         // n.f4.accept(this, argu);
         n.f4.accept(this, argu);
@@ -75,7 +71,6 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         final String className = n.f1.f0.tokenImage;
         currentClass = argu.getClassBinding(className);
 
-        // Distinct
         n.f5.accept(this, argu);
 
         for (MethodBinding method : currentClass.getMethods()) {
@@ -96,6 +91,9 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
     }
 
     public String visit(VarDeclaration n, SymbolTable argu) {
+        n.f0.accept(this, argu);
+        n.f1.accept(this, argu);
+        n.f2.accept(this, argu);
         return "";
     }
 
@@ -156,11 +154,16 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
                 return "Boolean";
             case 2:
                 return "Int";
-            case 3:
-                return ((Identifier) n.f0.choice).f0.toString();
             default:
-                // FIXME: Should we produce an error?
-                return "";
+                final Identifier type = (Identifier) n.f0.choice;
+                final String typeName = type.f0.tokenImage;
+                final ClassBinding binding = argu.getClassBinding(typeName);
+
+                if (binding == null) {
+                    throw new TypecheckException("Invalid type " + typeName);
+                }
+
+                return ((Identifier) n.f0.choice).f0.toString();
         }
     }
 
