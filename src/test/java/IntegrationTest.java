@@ -20,7 +20,7 @@ public class IntegrationTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort", "LinearSearch", "LinkedList", "QuickSort",
-            "TreeVisitor", "MoreThan4" })
+            "TreeVisitor", "MoreThan4", "OverrideVariable", "OverrideMethod" })
     public void testTypecheckingValidPrograms(String file) {
         final String filename = "programs/java/" + file + ".java";
         try (FileInputStream fStream = new FileInputStream(filename);) {
