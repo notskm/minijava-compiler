@@ -77,9 +77,19 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
 
         // Distinct
         n.f5.accept(this, argu);
-        // Distinct, no overloading
-        // n.f6.accept(this, argu);
-        n.f5.accept(this, argu);
+
+        for (MethodBinding method : currentClass.getMethods()) {
+            final String methodName = method.getName();
+            final String methodType = method.getType();
+            final String parentName = currentClass.getBaseClass();
+            final ClassBinding parent = argu.getClassBinding(parentName);
+            final MethodBinding parentMethod = parent.getMethod(methodName);
+            if (parentMethod != null && !parentMethod.getType().equals(methodType)) {
+                throw new TypecheckException("Overloading methods is not allowed");
+            }
+        }
+
+        n.f6.accept(this, argu);
 
         currentClass = null;
         return "";

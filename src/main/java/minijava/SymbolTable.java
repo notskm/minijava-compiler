@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Collection;
 
 public class SymbolTable {
     private Map<String, ClassBinding> classes = new HashMap<>();
@@ -31,6 +32,10 @@ public class SymbolTable {
         private Map<String, String> fields = new HashMap<>();
         private Map<String, MethodBinding> methods = new HashMap<>();
         private String baseClass = "";
+
+        public Collection<MethodBinding> getMethods() {
+            return methods.values();
+        }
 
         public String getName() {
             return name;
