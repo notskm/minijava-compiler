@@ -17,13 +17,15 @@ public class Typecheck {
 
     private boolean typecheck() {
         SymTableVis vis = new SymTableVis();
-        root.accept(vis);
-        symt = vis.symt;
-
         TypeCheckSimp check = new TypeCheckSimp();
-        final String output = root.accept(check, vis.symt);
 
-        return !output.equals("error");
+        try {
+            root.accept(vis);
+            root.accept(check, vis.symt);
+            return true;
+        } catch (TypecheckException e) {
+            return false;
+        }
     }
 
     public boolean check() {
