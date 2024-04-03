@@ -29,10 +29,10 @@ public class IntegrationTest {
             MiniJavaParser.ReInit(fStream);
 
             final Node root = MiniJavaParser.Goal();
-            final SymTableVis<Void, Integer> vis = new SymTableVis<>();
+            final SymTableVis vis = new SymTableVis();
             final TypeCheckSimp check = new TypeCheckSimp();
 
-            root.accept(vis, 0);
+            root.accept(vis);
 
             final String output = root.accept(check, vis.symt);
 
@@ -51,14 +51,13 @@ public class IntegrationTest {
             MiniJavaParser.ReInit(fStream);
 
             final Node root = MiniJavaParser.Goal();
-            final SymTableVis<Void, Integer> vis = new SymTableVis<>();
+            final SymTableVis vis = new SymTableVis();
             final TypeCheckSimp check = new TypeCheckSimp();
 
-            root.accept(vis, 0);
-
-            final String output = root.accept(check, vis.symt);
-
-            assertEquals("error", output);
+            assertThrows(RuntimeException.class, () -> {
+                root.accept(vis);
+                root.accept(check, vis.symt);
+            });
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -75,10 +74,10 @@ public class IntegrationTest {
             MiniJavaParser.ReInit(fStream);
 
             final Node root = MiniJavaParser.Goal();
-            final SymTableVis<Void, Integer> vis = new SymTableVis<>();
+            final SymTableVis vis = new SymTableVis();
             final TypeCheckSimp check = new TypeCheckSimp();
 
-            root.accept(vis, 0);
+            root.accept(vis);
             root.accept(check, vis.symt);
 
             final MethodTableVis methodTableVis = new MethodTableVis();

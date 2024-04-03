@@ -19,7 +19,10 @@ public class SymTableVis extends DepthFirstVisitor {
         final String argumentType = n.f8.toString() + n.f9.toString() + n.f10.toString();
         final String mainType = "(" + argumentType + ") -> " + n.f5.toString();
 
-        symt.addClass(className);
+        if (!symt.addClass(className)) {
+            throw new RuntimeException("Class already exists");
+        }
+
         ClassBinding mainClass = symt.getClassBinding(n.f1.f0.tokenImage);
         mainClass.addMethod(mainMethodName);
 
@@ -57,7 +60,9 @@ public class SymTableVis extends DepthFirstVisitor {
     public void visit(ClassDeclaration n) {
         final String className = n.f1.f0.tokenImage;
 
-        symt.addClass(className);
+        if (!symt.addClass(className)) {
+            throw new RuntimeException("Class already exists");
+        }
         currentClass = symt.getClassBinding(className);
 
         n.f0.accept(this);
@@ -75,7 +80,10 @@ public class SymTableVis extends DepthFirstVisitor {
         final String className = n.f1.f0.tokenImage;
         final String baseClass = n.f3.f0.tokenImage;
 
-        symt.addClass(className);
+        if (!symt.addClass(className)) {
+            throw new RuntimeException("Class already exists");
+        }
+
         currentClass = symt.getClassBinding(className);
         currentClass.setBaseClass(baseClass);
 
@@ -95,9 +103,10 @@ public class SymTableVis extends DepthFirstVisitor {
     public void visit(MethodDeclaration n) {
         final String methodName = n.f2.f0.toString() + "()";
 
-        // FIXME: Error if key already exists
+        if (!currentClass.addMethod(methodName)) {
+            throw new RuntimeException("Method already exists");
+        }
 
-        currentClass.addMethod(methodName);
         currentMethod = currentClass.getMethod(methodName);
         currentMethod.setReturnType(getTypeAsString(n.f1));
 
@@ -122,7 +131,9 @@ public class SymTableVis extends DepthFirstVisitor {
     public void visit(FormalParameter n) {
         final String type = getTypeAsString(n.f0);
         final String id = n.f1.f0.toString();
-        currentMethod.addParameter(id, type);
+        if (!currentMethod.addParameter(id, type)) {
+            throw new RuntimeException("Parameter already exists");
+        }
     }
 
     public void visit(VarDeclaration n) {
@@ -131,9 +142,13 @@ public class SymTableVis extends DepthFirstVisitor {
         String id = n.f1.f0.tokenImage;
 
         if (currentMethod != null) {
-            currentMethod.addLocalVariable(id, type);
+            if (!currentMethod.addLocalVariable(id, type)) {
+                throw new RuntimeException("local variable already exists");
+            }
         } else {
-            currentClass.addField(id, type);
+            if (!currentClass.addField(id, type)) {
+                throw new RuntimeException("Class field already exists");
+            }
         }
     }
 

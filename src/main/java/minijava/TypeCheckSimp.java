@@ -18,7 +18,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         final String classesResult = n.f1.accept(this, argu);
 
         if (mainClassResult.equals("error") || classesResult.equals("error")) {
-            return "error";
+            throw new RuntimeException("Failed to typecheck method declarations");
         }
 
         return "";
@@ -38,7 +38,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
 
         for (Node statement : n.f15.nodes) {
             if (statement.accept(this, argu).equals("error")) {
-                return "error";
+                throw new RuntimeException("Failed to typecheck statement");
             }
         }
 
@@ -68,7 +68,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
 
         final String methodsResult = n.f4.accept(this, argu);
         if (methodsResult.equals("error")) {
-            return "error";
+            throw new RuntimeException("Failed to typecheck method declarations");
         }
 
         n.f5.accept(this, argu);
@@ -80,7 +80,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
     public String visit(NodeListOptional n, SymbolTable argu) {
         for (Node node : n.nodes) {
             if (node.accept(this, argu).equals("error")) {
-                return "error";
+                throw new RuntimeException("Failed to typecheck node");
             }
         }
         return "";
@@ -97,7 +97,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         // n.f6.accept(this, argu);
         final String methodsResult = n.f6.accept(this, argu);
         if (methodsResult.equals("error")) {
-            return "error";
+            throw new RuntimeException("Failed to typecheck method declarations");
         }
 
         currentClass = null;
@@ -116,7 +116,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
 
         currentMethod = currentClass.getMethod(methodName);
         if (currentMethod == null) {
-            return "error";
+            throw new RuntimeException("Method does not exist");
         }
 
         // Ensure all parameters have distinct IDs
@@ -129,7 +129,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
                 parameter.accept(this, argu);
                 FormalParameterRest param = (FormalParameterRest) parameter;
                 if (!paramSet.add(param.f1.f0.toString())) {
-                    return "error";
+                    throw new RuntimeException("Parameter is not unique");
                 }
             }
         }
@@ -139,13 +139,13 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
 
         for (Node statement : n.f8.nodes) {
             if (statement.accept(this, argu).equals("error")) {
-                return "error";
+                throw new RuntimeException("Failed to typecheck statement");
             }
         }
 
         final String returnExpression = n.f10.accept(this, argu);
         if (!returnExpression.equals(returnType)) {
-            return "error";
+            throw new RuntimeException("Expected " + returnType + " got " + returnExpression);
         }
 
         currentMethod = null;
@@ -190,7 +190,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
             String result = node.accept(this, argu);
             // TODO: Determine whether null result is an error
             if (result == null || result.equals("error")) {
-                return "error";
+                throw new RuntimeException("Failed to typecheck statement");
             }
         }
 
@@ -205,7 +205,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         if (isSubtypeOf(expressionType, idType, argu)) {
             return "";
         } else {
-            return "error";
+            throw new RuntimeException("Expected " + idType + ", got " + expressionType);
         }
     }
 
@@ -214,11 +214,16 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         final String expression1Type = n.f2.accept(this, argu);
         final String expression2Type = n.f5.accept(this, argu);
 
-        if (idType.equals("Int[]") && expression1Type.equals("Int") && expression2Type.equals("Int")) {
-            return "";
-        } else {
-            return "error";
+        if (!idType.equals("Int[]")) {
+            throw new RuntimeException("Expected int[], got " + idType);
         }
+        if (!expression1Type.equals("Int")) {
+            throw new RuntimeException("expected int, got " + expression1Type);
+        }
+        if (!expression2Type.equals("Int")) {
+            throw new RuntimeException("expected int, got " + expression2Type);
+        }
+        return "";
     }
 
     public String visit(IfStatement n, SymbolTable argu) {
@@ -226,11 +231,11 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         final String ifStatementType = n.f4.accept(this, argu);
         final String elseStatementType = n.f4.accept(this, argu);
         if (!expressionType.equals("Boolean")) {
-            return "error";
+            throw new RuntimeException("Expected boolean, got " + expressionType);
         }
 
         if (ifStatementType.equals("error") || elseStatementType.equals("error")) {
-            return "error";
+            throw new RuntimeException("Failed to typecheck statement");
         }
 
         return "";
@@ -242,7 +247,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         if (expressionType.equals("Boolean") && !statementType.equals("error")) {
             return "";
         } else {
-            return "error";
+            throw new RuntimeException("Expected boolean, got " + expressionType);
         }
     }
 
@@ -254,37 +259,71 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
     public String visit(AndExpression n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
-        return p1Type.equals("Boolean") && p2Type.equals("Boolean") ? "Boolean" : "error";
+        if (!p1Type.equals("Boolean")) {
+            throw new RuntimeException("Expected boolean, got " + p1Type);
+        }
+        if (!p2Type.equals("Boolean")) {
+            throw new RuntimeException("Expected boolean, got " + p2Type);
+        }
+        return "Boolean";
     }
 
     public String visit(CompareExpression n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
-        return p1Type.equals("Int") && p2Type.equals("Int") ? "Boolean" : "error";
+        if (!p1Type.equals("Int")) {
+            throw new RuntimeException("Expected int, got " + p1Type);
+        }
+        if (!p2Type.equals("Int")) {
+            throw new RuntimeException("Expected int, got " + p2Type);
+        }
+        return "Boolean";
     }
 
     public String visit(PlusExpression n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
-        return p1Type.equals("Int") && p2Type.equals("Int") ? "Int" : "error";
+        if (!p1Type.equals("Int")) {
+            throw new RuntimeException("Expected int, got " + p1Type);
+        }
+        if (!p2Type.equals("Int")) {
+            throw new RuntimeException("Expected int, got " + p2Type);
+        }
+        return "Int";
     }
 
     public String visit(MinusExpression n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
-        return p1Type.equals("Int") && p2Type.equals("Int") ? "Int" : "error";
+        if (!p1Type.equals("Int")) {
+            throw new RuntimeException("Expected int, got " + p1Type);
+        }
+        if (!p2Type.equals("Int")) {
+            throw new RuntimeException("Expected int, got " + p2Type);
+        }
+        return "Int";
     }
 
     public String visit(TimesExpression n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
-        return p1Type.equals("Int") && p2Type.equals("Int") ? "Int" : "error";
+        if (!p1Type.equals("Int")) {
+            throw new RuntimeException("Expected int, got " + p1Type);
+        }
+        if (!p2Type.equals("Int")) {
+            throw new RuntimeException("Expected int, got " + p2Type);
+        }
+        return "Int";
     }
 
     public String visit(ArrayLookup n, SymbolTable argu) {
         final String p1Type = n.f0.accept(this, argu);
         final String p2Type = n.f2.accept(this, argu);
-        return p1Type.equals("Int[]") && p2Type.equals("Int") ? "Int" : "error";
+        if (p1Type.equals("Int[]") && p2Type.equals("Int")) {
+            return "Int";
+        } else {
+            throw new RuntimeException("Expected int, got " + p2Type);
+        }
     }
 
     public String visit(ArrayLength n, SymbolTable argu) {
@@ -298,16 +337,16 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         ClassBinding classBinding = argu.getClassBinding(className);
 
         if (classBinding == null) {
-            return "error";
+            throw new RuntimeException("Class does not exist");
         }
         MethodBinding method = classBinding.getMethod(methodName);
         if (method == null) {
-            return "error";
+            throw new RuntimeException("Method does not exist");
         }
         final String methodType = method.getType();
 
         if (methodType == null) {
-            return "error";
+            throw new RuntimeException("Method has no type information");
         }
 
         final String[] methodParts = methodType.split(" \\-\\> ");
@@ -320,18 +359,18 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         }
 
         if (arguments.equals("error")) {
-            return "error";
+            throw new RuntimeException("Argument list contains error");
         }
 
         final String[] argumentList = arguments.split(", ");
 
         if (parameterList.length != argumentList.length) {
-            return "error";
+            throw new RuntimeException("Argument list size does not match parameter list size");
         }
 
         for (int i = 0; i < parameterList.length; i++) {
             if (!isSubtypeOf(argumentList[i], parameterList[i], argu)) {
-                return "error";
+                throw new RuntimeException("Invalid argument type");
             }
         }
 
@@ -347,7 +386,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         for (Node expr : n.f1.nodes) {
             final String type = expr.accept(this, argu);
             if (type == null || type.equals("error")) {
-                return "error";
+                throw new RuntimeException("Did not recieve a type for expression");
             }
             list += ", " + type;
         }
@@ -382,7 +421,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         if (type != null) {
             return type;
         } else {
-            return "error";
+            throw new RuntimeException("Type information for identifier not found");
         }
     }
 
@@ -390,7 +429,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         if (currentClass != null) {
             return currentClass.getName();
         } else {
-            return "error";
+            throw new RuntimeException("this used outside of a class");
         }
     }
 
@@ -400,7 +439,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         if (type.equals("Int")) {
             return "Int[]";
         } else {
-            return "error";
+            throw new RuntimeException("Expression assigned to int[] is not of type int[]");
         }
     }
 
@@ -413,7 +452,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         if (type.equals("Boolean")) {
             return type;
         } else {
-            return "error";
+            throw new RuntimeException("Not expression does not evaluation to boolean");
         }
     }
 

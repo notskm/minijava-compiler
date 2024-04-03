@@ -1,6 +1,7 @@
 package minijava;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,9 +75,9 @@ public class TypeCheckSimpTest {
         final Expression e = new Expression(nc2);
         final ArrayAllocationExpression aae = new ArrayAllocationExpression(e);
 
-        final String type = aae.accept(check, emptySymbolTable);
-
-        assertEquals("error", type);
+        assertThrows(RuntimeException.class, () -> {
+            aae.accept(check, emptySymbolTable);
+        });
     }
 
     @Test
@@ -103,9 +104,9 @@ public class TypeCheckSimpTest {
         final Expression e = new Expression(nc2);
         final NotExpression ne = new NotExpression(e);
 
-        final String type = ne.accept(check, emptySymbolTable);
-
-        assertEquals("error", type);
+        assertThrows(RuntimeException.class, () -> {
+            ne.accept(check, emptySymbolTable);
+        });
     }
 
     @Test
