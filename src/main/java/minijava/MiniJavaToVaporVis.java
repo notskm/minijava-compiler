@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import minijava.SymbolTable.ClassBinding;
+import minijava.SymbolTable.MethodBinding;
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
@@ -14,6 +15,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     public List<String> methods = new ArrayList<>();
 
     private ClassBinding currentClass = null;
+    private MethodBinding currentMethod = null;
     private String methodString = "";
     private int indentLevel = 0;
     private int tempVariableNumber = 0;
@@ -61,6 +63,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     public Void visit(MainClass n, SymbolTable symt) {
         currentClass = symt.getClassBinding(n.f1.f0.tokenImage);
+        currentMethod = currentClass.getMethod("main()");
+
         methodString += "func Main()\n";
         beginScope();
         n.f14.accept(this, symt);
@@ -71,6 +75,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         methodString = "";
 
         endScope();
+        currentClass = null;
+        currentMethod = null;
 
         return null;
     }
@@ -95,6 +101,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         final String className = currentClass.getName();
         final String methodName = n.f2.f0.tokenImage;
 
+        currentMethod = currentClass.getMethod(methodName + "()");
+
         n.f4.accept(this, symt);
         String arguments = "this";
 
@@ -117,6 +125,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         methodString = "";
 
         endScope();
+
+        currentMethod = null;
 
         return null;
     }
@@ -166,7 +176,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     public Void visit(Identifier n, SymbolTable symt) {
         expressionVariable = n.f0.tokenImage;
-        expressionVariableType = "";
+        expressionVariableType = currentMethod.lookup(expressionVariable);
         return null;
     }
 
