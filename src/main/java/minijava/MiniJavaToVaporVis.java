@@ -253,6 +253,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         final String expressionVar = expressionVariable;
         final String methodName = n.f2.f0.tokenImage;
         final int methodIndex = methodTables.get(expressionVariableType).indexOf(methodName);
+        expressionVariable = "";
         final String methodVar = newTempVariable();
 
         methodString += indent(methodVar + " = [" + expressionVar + "]\n");
@@ -263,6 +264,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         if (!expressionVariable.isEmpty()) {
             arguments += " " + expressionVariable;
         }
+        expressionVariable = "";
 
         final String tempVar = newTempVariable();
         methodString += indent(tempVar + " = call " + methodVar + "(" + arguments + ")\n");
