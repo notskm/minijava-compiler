@@ -106,9 +106,11 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         n.f4.accept(this, symt);
         String arguments = "this";
 
-        if (!arguments.isEmpty()) {
+        if (!expressionVariable.isEmpty()) {
             arguments += " " + expressionVariable;
         }
+        expressionVariable = "";
+        expressionVariableType = "";
 
         methodString += "func " + className + "." + methodName + "(" + arguments + ")\n";
 
@@ -120,6 +122,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         n.f10.accept(this, symt);
         final String returnVar = expressionVariable;
         methodString += indent("ret " + returnVar);
+        expressionVariable = "";
+        expressionVariableType = "";
 
         methods.add(methodString);
         methodString = "";
@@ -165,6 +169,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
         methodString += indent(n.f0.f0.tokenImage + " = " + expressionVariable);
         methodString += "\n";
+        expressionVariable = "";
+        expressionVariableType = "";
         return null;
     }
 
@@ -189,6 +195,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         n.f2.accept(this, symt);
 
         methodString += indent("if0 " + expressionVariable + " goto :" + elseLabel + "\n");
+        expressionVariable = "";
+        expressionVariableType = "";
         beginIndent();
         n.f4.accept(this, symt);
         methodString += indent("goto :" + endLabel + "\n");
@@ -218,6 +226,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         n.f0.accept(this, symt);
         final String before = expressionVariable;
         expressionVariable = "";
+        expressionVariableType = "";
 
         n.f1.accept(this, symt);
         final String after = expressionVariable;
@@ -235,6 +244,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     public Void visit(ExpressionRest n, SymbolTable symt) {
         final String before = expressionVariable;
         expressionVariable = "";
+        expressionVariableType = "";
 
         n.f1.accept(this, symt);
         final String after = expressionVariable;
@@ -253,7 +263,10 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         final String expressionVar = expressionVariable;
         final String methodName = n.f2.f0.tokenImage;
         final int methodIndex = methodTables.get(expressionVariableType).indexOf(methodName);
+        final String returnType = symt.getClassBinding(expressionVariableType).getMethod(methodName + "()")
+                .getReturnType();
         expressionVariable = "";
+        expressionVariableType = "";
         final String methodVar = newTempVariable();
 
         methodString += indent(methodVar + " = [" + expressionVar + "]\n");
@@ -265,10 +278,12 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
             arguments += " " + expressionVariable;
         }
         expressionVariable = "";
+        expressionVariableType = "";
 
         final String tempVar = newTempVariable();
         methodString += indent(tempVar + " = call " + methodVar + "(" + arguments + ")\n");
         expressionVariable = tempVar;
+        expressionVariableType = returnType;
 
         return null;
     }
@@ -276,9 +291,13 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     public Void visit(CompareExpression n, SymbolTable symt) {
         n.f0.accept(this, symt);
         final String lhs = expressionVariable;
+        expressionVariable = "";
+        expressionVariableType = "";
 
         n.f2.accept(this, symt);
         final String rhs = expressionVariable;
+        expressionVariable = "";
+        expressionVariableType = "";
 
         final String tempVar = newTempVariable();
         methodString += indent(tempVar + " = LtS(" + lhs + " " + rhs + ")\n");
@@ -292,14 +311,19 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     public Void visit(MinusExpression n, SymbolTable symt) {
         n.f0.accept(this, symt);
         final String lhs = expressionVariable;
+        expressionVariable = "";
+        expressionVariableType = "";
 
         n.f2.accept(this, symt);
         final String rhs = expressionVariable;
+        expressionVariable = "";
+        expressionVariableType = "";
 
         final String tempVar = newTempVariable();
         methodString += indent(tempVar + " = Sub(" + lhs + " " + rhs + ")\n");
 
         expressionVariable = tempVar;
+        expressionVariableType = "Int";
 
         return null;
     }
@@ -307,9 +331,13 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     public Void visit(TimesExpression n, SymbolTable symt) {
         n.f0.accept(this, symt);
         final String lhs = expressionVariable;
+        expressionVariable = "";
+        expressionVariableType = "";
 
         n.f2.accept(this, symt);
         final String rhs = expressionVariable;
+        expressionVariable = "";
+        expressionVariableType = "";
 
         expressionVariable = "MulS(" + lhs + " " + rhs + ")";
         expressionVariableType = "Boolean";
@@ -320,6 +348,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     public Void visit(PrintStatement n, SymbolTable symt) {
         n.f2.accept(this, symt);
         methodString += indent("PrintIntS(" + expressionVariable + ")\n");
+        expressionVariable = "";
+        expressionVariableType = "";
         return null;
     }
 
