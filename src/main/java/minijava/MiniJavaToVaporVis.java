@@ -152,7 +152,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         beginIndent();
         methodString += indent("Error(\"null pointer\")\n");
         endIndent();
-        methodString += indent("null1:\n");
+        methodString += indent(nullLabel + ":\n");
 
         expressionVariable = tempVar;
         expressionVariableType = className;
