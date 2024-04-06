@@ -186,6 +186,18 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         return null;
     }
 
+    public Void visit(TrueLiteral n, SymbolTable symt) {
+        expressionVariable = n.f0.tokenImage;
+        expressionVariableType = "Boolean";
+        return null;
+    }
+
+    public Void visit(FalseLiteral n, SymbolTable symt) {
+        expressionVariable = n.f0.tokenImage;
+        expressionVariableType = "Boolean";
+        return null;
+    }
+
     public Void visit(Identifier n, SymbolTable symt) {
         expressionVariable = n.f0.tokenImage;
         expressionVariableType = currentMethod.lookup(expressionVariable);
