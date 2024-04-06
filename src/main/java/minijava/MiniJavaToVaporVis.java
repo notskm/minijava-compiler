@@ -404,7 +404,6 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     private void beginIndent() {
         indentLevel++;
-    }
 
     private void endIndent() {
         indentLevel--;
