@@ -137,6 +137,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     private String expressionVariable = "";
     private String expressionVariableType = "";
+    private boolean expressionIsPrimary = false;
 
     public Void visit(AllocationExpression n, SymbolTable argu) {
         final String className = n.f1.f0.tokenImage;
@@ -148,6 +149,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
         methodString += indent(tempVar + " = HeapAllocZ(" + bytes + ")\n");
         methodString += indent("[" + tempVar + "] = :vmt_" + className + "\n");
+
         methodString += indent("if " + tempVar + " goto :" + nullLabel + "\n");
         beginIndent();
         methodString += indent("Error(\"null pointer\")\n");
@@ -165,9 +167,13 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     }
 
     public Void visit(AssignmentStatement n, SymbolTable symt) {
+        final String lhs = n.f0.f0.tokenImage;
+
         n.f2.accept(this, symt);
 
-        methodString += indent(n.f0.f0.tokenImage + " = " + expressionVariable);
+        final String rhs = putExpressionInTempIfNecessary();
+
+        methodString += indent(lhs + " = " + rhs);
         methodString += "\n";
         expressionVariable = "";
         expressionVariableType = "";
@@ -212,7 +218,13 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         return null;
     }
 
+    public Void visit(Expression n, SymbolTable symt) {
+        expressionIsPrimary = false;
+        return n.f0.accept(this, symt);
+    }
+
     public Void visit(PrimaryExpression n, SymbolTable symt) {
+        expressionIsPrimary = true;
         return n.f0.accept(this, symt);
     }
 
@@ -290,12 +302,12 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     public Void visit(CompareExpression n, SymbolTable symt) {
         n.f0.accept(this, symt);
-        final String lhs = expressionVariable;
+        final String lhs = putExpressionInTempIfNecessary();
         expressionVariable = "";
         expressionVariableType = "";
 
         n.f2.accept(this, symt);
-        final String rhs = expressionVariable;
+        final String rhs = putExpressionInTempIfNecessary();
         expressionVariable = "";
         expressionVariableType = "";
 
@@ -310,12 +322,12 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     public Void visit(MinusExpression n, SymbolTable symt) {
         n.f0.accept(this, symt);
-        final String lhs = expressionVariable;
+        final String lhs = putExpressionInTempIfNecessary();
         expressionVariable = "";
         expressionVariableType = "";
 
         n.f2.accept(this, symt);
-        final String rhs = expressionVariable;
+        final String rhs = putExpressionInTempIfNecessary();
         expressionVariable = "";
         expressionVariableType = "";
 
@@ -330,12 +342,12 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     public Void visit(TimesExpression n, SymbolTable symt) {
         n.f0.accept(this, symt);
-        final String lhs = expressionVariable;
+        final String lhs = putExpressionInTempIfNecessary();
         expressionVariable = "";
         expressionVariableType = "";
 
         n.f2.accept(this, symt);
-        final String rhs = expressionVariable;
+        final String rhs = putExpressionInTempIfNecessary();
         expressionVariable = "";
         expressionVariableType = "";
 
@@ -343,6 +355,15 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         expressionVariableType = "Boolean";
 
         return null;
+    }
+
+    public String putExpressionInTempIfNecessary() {
+        if (!expressionIsPrimary) {
+            String exprTemp = newTempVariable();
+            methodString += indent(exprTemp + " = " + expressionVariable + "\n");
+            return exprTemp;
+        }
+        return expressionVariable;
     }
 
     public Void visit(PrintStatement n, SymbolTable symt) {
