@@ -187,13 +187,13 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
     }
 
     public Void visit(TrueLiteral n, SymbolTable symt) {
-        expressionVariable = n.f0.tokenImage;
+        expressionVariable = "1";
         expressionVariableType = "Boolean";
         return null;
     }
 
     public Void visit(FalseLiteral n, SymbolTable symt) {
-        expressionVariable = n.f0.tokenImage;
+        expressionVariable = "0";
         expressionVariableType = "Boolean";
         return null;
     }
@@ -404,6 +404,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     private void beginIndent() {
         indentLevel++;
+    }
 
     private void endIndent() {
         indentLevel--;
