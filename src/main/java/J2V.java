@@ -1,6 +1,7 @@
 import minijava.MethodTableVis;
 import minijava.MiniJavaToVaporVis;
 import minijava.SymbolTable;
+import minijava.VaporAST;
 import syntaxtree.Node;
 
 public class J2V {
@@ -9,9 +10,9 @@ public class J2V {
         root.accept(methodTableVis);
 
         MiniJavaToVaporVis vaporVis = new MiniJavaToVaporVis(methodTableVis.methodTables);
-        root.accept(vaporVis, symt);
+        VaporAST vapor = root.accept(vaporVis, symt);
 
-        return vaporVis.toVapor();
+        return vapor.subprogram;
     }
 
     public static void main(String[] args) {

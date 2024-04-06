@@ -10,13 +10,12 @@ import minijava.SymbolTable.MethodBinding;
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
-public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
+public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
     public Map<String, List<String>> methodTables;
     public List<String> methods = new ArrayList<>();
 
     private ClassBinding currentClass = null;
     private MethodBinding currentMethod = null;
-    private String methodString = "";
     private int indentLevel = 0;
     private int tempVariableNumber = 0;
     private int ifLabelNumber = 1;
@@ -61,344 +60,488 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         return String.join("\n\n", methods);
     }
 
-    public Void visit(MainClass n, SymbolTable symt) {
+    public VaporAST visit(Goal n, SymbolTable symt) {
+        VaporAST ret = new VaporAST();
+
+        ret.subprogram = methodTablesToVapor();
+
+        ret.subprogram += n.f0.accept(this, symt).subprogram;
+        for (Node node : n.f1.nodes) {
+            ret.subprogram += node.accept(this, symt).subprogram;
+        }
+
+        return ret;
+    }
+
+    public VaporAST visit(MainClass n, SymbolTable symt) {
         currentClass = symt.getClassBinding(n.f1.f0.tokenImage);
-        currentMethod = currentClass.getMethod("main()");
+        currentMethod = currentClass.getMethod("main");
 
-        methodString += "func Main()\n";
         beginScope();
-        n.f14.accept(this, symt);
-        n.f15.accept(this, symt);
-        methodString += indent("ret");
 
-        methods.add(methodString);
-        methodString = "";
+        VaporAST varDeclarations = new VaporAST();
+        for (Node node : n.f14.nodes) {
+            VaporAST var = node.accept(this, symt);
+            varDeclarations.subprogram += var.subprogram;
+        }
+
+        VaporAST statements = new VaporAST();
+        for (Node node : n.f15.nodes) {
+            VaporAST statement = node.accept(this, symt);
+            statements.subprogram += statement.subprogram;
+        }
+
+        VaporAST ret = new VaporAST();
+        ret.subprogram += "func Main()\n";
+        ret.subprogram += varDeclarations.subprogram;
+        ret.subprogram += statements.subprogram;
+        ret.subprogram += indent("ret\n\n");
 
         endScope();
-        currentClass = null;
-        currentMethod = null;
 
-        return null;
+        // System.out.println(ret.subprogram);
+
+        currentClass = null;
+        return ret;
     }
 
-    public Void visit(ClassDeclaration n, SymbolTable symt) {
+    public VaporAST visit(TypeDeclaration n, SymbolTable symt) {
+        return n.f0.accept(this, symt);
+    }
+
+    public VaporAST visit(ClassDeclaration n, SymbolTable symt) {
         currentClass = symt.getClassBinding(n.f1.f0.tokenImage);
-        n.f3.accept(this, symt);
-        n.f4.accept(this, symt);
+
+        VaporAST varDeclarations = new VaporAST();
+        for (Node node : n.f3.nodes) {
+            VaporAST var = node.accept(this, symt);
+            varDeclarations.subprogram += var.subprogram;
+        }
+
+        VaporAST methodDeclarations = new VaporAST();
+        for (Node node : n.f4.nodes) {
+            VaporAST methodDecl = node.accept(this, symt);
+            methodDeclarations.subprogram += methodDecl.subprogram;
+        }
+
+        VaporAST ret = new VaporAST();
+        ret.subprogram += varDeclarations.subprogram;
+        ret.subprogram += methodDeclarations.subprogram;
+
+        // System.out.println(ret.subprogram);
+
         currentClass = null;
-        return null;
+        return ret;
     }
 
-    public Void visit(ClassExtendsDeclaration n, SymbolTable symt) {
+    public VaporAST visit(ClassExtendsDeclaration n, SymbolTable symt) {
         currentClass = symt.getClassBinding(n.f1.f0.tokenImage);
-        n.f5.accept(this, symt);
-        n.f6.accept(this, symt);
+
+        VaporAST varDeclarations = new VaporAST();
+        for (Node node : n.f5.nodes) {
+            VaporAST var = node.accept(this, symt);
+            varDeclarations.subprogram += var.subprogram;
+        }
+
+        VaporAST methodDeclarations = new VaporAST();
+        for (Node node : n.f6.nodes) {
+            VaporAST methodDecl = node.accept(this, symt);
+            methodDeclarations.subprogram += methodDecl.subprogram;
+        }
+
+        VaporAST ret = new VaporAST();
+        ret.subprogram += varDeclarations.subprogram;
+        ret.subprogram += methodDeclarations.subprogram;
+
+        System.out.println(ret.subprogram);
+
         currentClass = null;
-        return null;
+        return ret;
     }
 
-    public Void visit(MethodDeclaration n, SymbolTable symt) {
+    public VaporAST visit(MethodDeclaration n, SymbolTable symt) {
         final String className = currentClass.getName();
         final String methodName = n.f2.f0.tokenImage;
 
         currentMethod = currentClass.getMethod(methodName + "()");
 
-        n.f4.accept(this, symt);
+        VaporAST args = n.f4.accept(this, symt);
+        if (args == null) {
+            args = new VaporAST();
+        }
         String arguments = "this";
 
-        if (!expressionVariable.isEmpty()) {
-            arguments += " " + expressionVariable;
+        if (!args.tempExprResult.isEmpty()) {
+            arguments += " " + args.tempExprResult;
         }
-        expressionVariable = "";
-        expressionVariableType = "";
-
-        methodString += "func " + className + "." + methodName + "(" + arguments + ")\n";
 
         beginScope();
 
-        n.f7.accept(this, symt);
-        n.f8.accept(this, symt);
+        VaporAST varDeclarations = new VaporAST();
+        for (Node node : n.f7.nodes) {
+            VaporAST var = node.accept(this, symt);
+            varDeclarations.subprogram += var.subprogram;
+        }
+        VaporAST statements = new VaporAST();
+        for (Node node : n.f8.nodes) {
+            VaporAST statement = node.accept(this, symt);
+            statements.subprogram += statement.subprogram;
+        }
+        VaporAST returnExpr = n.f10.accept(this, symt);
 
-        n.f10.accept(this, symt);
-        final String returnVar = expressionVariable;
-        methodString += indent("ret " + returnVar);
-        expressionVariable = "";
-        expressionVariableType = "";
-
-        methods.add(methodString);
-        methodString = "";
+        VaporAST ret = new VaporAST();
+        ret.subprogram += "func " + className + "." + methodName + "(" + arguments + ")\n";
+        ret.subprogram += varDeclarations.subprogram;
+        ret.subprogram += statements.subprogram;
+        ret.subprogram += indent(returnExpr.subprogram);
+        ret.subprogram += "ret " + returnExpr.tempExprResult + "\n";
 
         endScope();
 
-        currentMethod = null;
-
-        return null;
+        return ret;
     }
 
-    private String expressionVariable = "";
-    private String expressionVariableType = "";
-    private boolean expressionIsPrimary = false;
+    public VaporAST visit(FormalParameterList n, SymbolTable symt) {
+        VaporAST expr = n.f0.accept(this, symt);
 
-    public Void visit(AllocationExpression n, SymbolTable argu) {
+        VaporAST ret = new VaporAST();
+        ret.subprogram = expr.subprogram;
+        ret.tempExprResult = expr.tempExprResult;
+
+        for (Node node : n.f1.nodes) {
+            VaporAST nodeAst = node.accept(this, symt);
+            ret.subprogram += nodeAst.subprogram;
+            ret.tempExprResult += " " + nodeAst.tempExprResult;
+        }
+
+        return ret;
+    }
+
+    public VaporAST visit(FormalParameterRest n, SymbolTable symt) {
+        return n.f1.accept(this, symt);
+    }
+
+    public VaporAST visit(FormalParameter n, SymbolTable symt) {
+        return n.f1.accept(this, symt);
+    }
+
+    public VaporAST visit(AllocationExpression n, SymbolTable argu) {
         final String className = n.f1.f0.tokenImage;
         final int bytes = argu.getClassBinding(className).getSizeInBytes() + 4;
-        final String tempVar = newTempVariable();
+        final String tmp1 = newTempVariable();
         final String nullLabel = "null" + nullLabelNumber;
 
         nullLabelNumber++;
 
-        methodString += indent(tempVar + " = HeapAllocZ(" + bytes + ")\n");
-        methodString += indent("[" + tempVar + "] = :vmt_" + className + "\n");
+        VaporAST ret = new VaporAST();
 
-        methodString += indent("if " + tempVar + " goto :" + nullLabel + "\n");
+        ret.subprogram += indent(tmp1 + " = HeapAllocZ(" + bytes + ")\n");
+        ret.subprogram += indent("[" + tmp1 + "] = :vmt_" + className + "\n");
+        ret.subprogram += indent("if " + tmp1 + " goto :" + nullLabel + "\n");
         beginIndent();
-        methodString += indent("Error(\"null pointer\")\n");
+        ret.subprogram += indent("Error(\"null pointer\")\n");
         endIndent();
-        methodString += indent(nullLabel + ":\n");
+        ret.subprogram += indent(nullLabel + ":\n");
 
-        expressionVariable = tempVar;
-        expressionVariableType = className;
+        ret.tempExprResult = tmp1;
+        ret.tempExprType = className;
 
-        return null;
+        return ret;
+
     }
 
-    public Void visit(VarDeclaration n, SymbolTable symt) {
-        return null;
+    public VaporAST visit(VarDeclaration n, SymbolTable symt) {
+        return n.f1.accept(this, symt);
     }
 
-    public Void visit(AssignmentStatement n, SymbolTable symt) {
+    // TODO: Either make use of argument passing or a member variable to
+    // tell which variable to assign to.
+    public VaporAST visit(AssignmentStatement n, SymbolTable symt) {
         final String lhs = n.f0.f0.tokenImage;
 
-        n.f2.accept(this, symt);
+        VaporAST rhs = n.f2.accept(this, symt);
+        String tmp1 = newTempVariable();
+        String rhsProg = "";
+        if (rhs.subprogram != "") {
+            rhsProg = rhs.subprogram + "\n";
+        }
+        rhsProg += indent(tmp1 + " = " + rhs.tempExprResult + "\n");
 
-        final String rhs = putExpressionInTempIfNecessary();
+        String assign = indent(lhs + " = " + tmp1);
 
-        methodString += indent(lhs + " = " + rhs);
-        methodString += "\n";
-        expressionVariable = "";
-        expressionVariableType = "";
-        return null;
+        VaporAST ret = new VaporAST();
+        ret.subprogram = rhsProg + assign + "\n";
+        ret.tempExprResult = lhs;
+
+        return ret;
     }
 
-    public Void visit(IntegerLiteral n, SymbolTable symt) {
-        expressionVariable = n.f0.tokenImage;
-        expressionVariableType = "Int";
-        return null;
+    public VaporAST visit(IntegerLiteral n, SymbolTable symt) {
+        VaporAST ret = new VaporAST();
+        ret.tempExprResult = n.f0.tokenImage;
+        ret.tempExprType = "Int";
+        ret.tempType = VaporAST.Type.trivial;
+        return ret;
     }
 
-    public Void visit(TrueLiteral n, SymbolTable symt) {
-        expressionVariable = "1";
-        expressionVariableType = "Boolean";
-        return null;
+    public VaporAST visit(TrueLiteral n, SymbolTable symt) {
+        VaporAST ret = new VaporAST();
+        ret.tempExprResult = "1";
+        ret.tempExprType = "Boolean";
+        ret.tempType = VaporAST.Type.trivial;
+        return ret;
     }
 
-    public Void visit(FalseLiteral n, SymbolTable symt) {
-        expressionVariable = "0";
-        expressionVariableType = "Boolean";
-        return null;
+    public VaporAST visit(FalseLiteral n, SymbolTable symt) {
+        VaporAST ret = new VaporAST();
+        ret.tempExprResult = "0";
+        ret.tempExprType = "Boolean";
+        ret.tempType = VaporAST.Type.trivial;
+        return ret;
     }
 
-    public Void visit(Identifier n, SymbolTable symt) {
-        expressionVariable = n.f0.tokenImage;
-        expressionVariableType = currentMethod.lookup(expressionVariable);
-        return null;
+    public VaporAST visit(Identifier n, SymbolTable symt) {
+        VaporAST ret = new VaporAST();
+        ret.tempExprResult = n.f0.tokenImage;
+        ret.tempExprType = currentMethod.lookup(ret.tempExprResult);
+        ret.tempType = VaporAST.Type.trivial;
+        return ret;
     }
 
-    public Void visit(IfStatement n, SymbolTable symt) {
+    public VaporAST visit(Statement n, SymbolTable symt) {
+        return n.f0.accept(this, symt);
+    }
+
+    public VaporAST visit(Block n, SymbolTable symt) {
+        VaporAST ret = new VaporAST();
+        for (Node node : n.f1.nodes) {
+            ret.subprogram += node.accept(this, symt).subprogram;
+        }
+        return ret;
+    }
+
+    public VaporAST visit(BracketExpression n, SymbolTable symt) {
+        return n.f1.accept(this, symt);
+    }
+
+    public VaporAST visit(IfStatement n, SymbolTable symt) {
         final String elseLabel = "if" + ifLabelNumber + "_else";
         final String endLabel = "if" + ifLabelNumber + "_end";
 
         ifLabelNumber++;
 
-        n.f2.accept(this, symt);
-
-        methodString += indent("if0 " + expressionVariable + " goto :" + elseLabel + "\n");
-        expressionVariable = "";
-        expressionVariableType = "";
+        VaporAST expr = n.f2.accept(this, symt);
         beginIndent();
-        n.f4.accept(this, symt);
-        methodString += indent("goto :" + endLabel + "\n");
+        VaporAST trueStatement = n.f4.accept(this, symt);
+        VaporAST falseStatement = n.f6.accept(this, symt);
         endIndent();
 
-        methodString += indent(elseLabel + ":\n");
-        beginIndent();
-        n.f6.accept(this, symt);
-        endIndent();
+        VaporAST ret = new VaporAST();
 
-        methodString += indent(endLabel + ":\n");
+        ret.subprogram = expr.subprogram + "\n";
+        ret.subprogram += indent("if0 " + expr.tempExprResult + " goto :" + elseLabel + "\n");
+        ret.subprogram += trueStatement.subprogram + "\n";
+        ret.subprogram += indent("goto :" + endLabel + "\n");
+        ret.subprogram += indent(elseLabel + ":\n");
+        ret.subprogram += falseStatement.subprogram;
+        ret.subprogram += indent(endLabel + ":\n");
 
-        return null;
+        return ret;
     }
 
-    public Void visit(Expression n, SymbolTable symt) {
-        expressionIsPrimary = false;
+    public VaporAST visit(Expression n, SymbolTable symt) {
         return n.f0.accept(this, symt);
     }
 
-    public Void visit(PrimaryExpression n, SymbolTable symt) {
-        expressionIsPrimary = true;
+    public VaporAST visit(PrimaryExpression n, SymbolTable symt) {
         return n.f0.accept(this, symt);
     }
 
-    public Void visit(ThisExpression n, SymbolTable symt) {
-        expressionVariable = "this";
-        expressionVariableType = currentClass.getName();
-        return null;
+    public VaporAST visit(ThisExpression n, SymbolTable symt) {
+        VaporAST ret = new VaporAST();
+        ret.tempExprResult = "this";
+        ret.tempExprType = currentClass.getName();
+        return ret;
     }
 
-    public Void visit(ExpressionList n, SymbolTable symt) {
-        n.f0.accept(this, symt);
-        final String before = expressionVariable;
-        expressionVariable = "";
-        expressionVariableType = "";
+    public VaporAST visit(ExpressionList n, SymbolTable symt) {
+        VaporAST expr = n.f0.accept(this, symt);
 
-        n.f1.accept(this, symt);
-        final String after = expressionVariable;
-        expressionVariable = before;
+        VaporAST ret = new VaporAST();
+        ret.subprogram = expr.subprogram;
+        ret.tempExprResult = expr.tempExprResult;
 
-        if (!after.isEmpty()) {
-            expressionVariable += after;
+        for (Node node : n.f1.nodes) {
+            VaporAST nodeAst = node.accept(this, symt);
+            ret.subprogram += nodeAst.subprogram;
+            ret.tempExprResult += " " + nodeAst.tempExprResult;
         }
 
-        expressionVariableType = "";
-
-        return null;
+        return ret;
     }
 
-    public Void visit(ExpressionRest n, SymbolTable symt) {
-        final String before = expressionVariable;
-        expressionVariable = "";
-        expressionVariableType = "";
+    public VaporAST visit(ExpressionRest n, SymbolTable symt) {
+        return n.f1.accept(this, null);
+    }
 
-        n.f1.accept(this, symt);
-        final String after = expressionVariable;
-        expressionVariable = before;
-
-        if (!after.isEmpty()) {
-            expressionVariable += " " + expressionVariable;
+    public VaporAST visit(MessageSend n, SymbolTable symt) {
+        VaporAST primaryExpr = n.f0.accept(this, symt);
+        VaporAST method = n.f2.accept(this, symt);
+        VaporAST args = n.f4.accept(this, symt);
+        if (args == null) {
+            args = new VaporAST();
         }
 
-        return null;
-    }
+        final int methodIndex = methodTables.get(primaryExpr.tempExprType).indexOf(method.tempExprResult);
 
-    public Void visit(MessageSend n, SymbolTable symt) {
-        n.f0.accept(this, symt);
+        final String tmp1 = newTempVariable();
+        final String tmp2 = newTempVariable();
+        String program = primaryExpr.subprogram;
+        program += args.subprogram;
+        program += indent(tmp1 + " = [" + primaryExpr.tempExprResult + "]\n");
+        program += indent(tmp1 + " = [" + tmp1 + "+" + methodIndex + "]\n");
 
-        final String expressionVar = expressionVariable;
-        final String methodName = n.f2.f0.tokenImage;
-        final int methodIndex = methodTables.get(expressionVariableType).indexOf(methodName);
-        final String returnType = symt.getClassBinding(expressionVariableType).getMethod(methodName + "()")
-                .getReturnType();
-        expressionVariable = "";
-        expressionVariableType = "";
-        final String methodVar = newTempVariable();
-
-        methodString += indent(methodVar + " = [" + expressionVar + "]\n");
-        methodString += indent(methodVar + " = [" + methodVar + "+" + methodIndex + "]\n");
-
-        n.f4.accept(this, symt);
-        String arguments = expressionVar;
-        if (!expressionVariable.isEmpty()) {
-            arguments += " " + expressionVariable;
+        String call = "call " + tmp1 + "(" + primaryExpr.tempExprResult;
+        if (args.tempExprResult != "") {
+            call += " " + args.tempExprResult;
         }
-        expressionVariable = "";
-        expressionVariableType = "";
+        call += ")";
+        program += indent(tmp2 + " = " + call + "\n");
 
-        final String tempVar = newTempVariable();
-        methodString += indent(tempVar + " = call " + methodVar + "(" + arguments + ")\n");
-        expressionVariable = tempVar;
-        expressionVariableType = returnType;
-
-        return null;
+        VaporAST ret = new VaporAST();
+        ret.subprogram = program;
+        ret.tempExprResult = tmp2;
+        return ret;
     }
 
-    public Void visit(CompareExpression n, SymbolTable symt) {
-        n.f0.accept(this, symt);
-        final String lhs = putExpressionInTempIfNecessary();
-        expressionVariable = "";
-        expressionVariableType = "";
-
-        n.f2.accept(this, symt);
-        final String rhs = putExpressionInTempIfNecessary();
-        expressionVariable = "";
-        expressionVariableType = "";
-
-        final String tempVar = newTempVariable();
-        methodString += indent(tempVar + " = LtS(" + lhs + " " + rhs + ")\n");
-
-        expressionVariable = tempVar;
-        expressionVariableType = "Boolean";
-
-        return null;
-    }
-
-    public Void visit(MinusExpression n, SymbolTable symt) {
-        n.f0.accept(this, symt);
-        final String lhs = putExpressionInTempIfNecessary();
-        expressionVariable = "";
-        expressionVariableType = "";
-
-        n.f2.accept(this, symt);
-        final String rhs = putExpressionInTempIfNecessary();
-        expressionVariable = "";
-        expressionVariableType = "";
-
-        final String tempVar = newTempVariable();
-        methodString += indent(tempVar + " = Sub(" + lhs + " " + rhs + ")\n");
-
-        expressionVariable = tempVar;
-        expressionVariableType = "Int";
-
-        return null;
-    }
-
-    public Void visit(TimesExpression n, SymbolTable symt) {
-        n.f0.accept(this, symt);
-        final String lhs = putExpressionInTempIfNecessary();
-        expressionVariable = "";
-        expressionVariableType = "";
-
-        n.f2.accept(this, symt);
-        final String rhs = putExpressionInTempIfNecessary();
-        expressionVariable = "";
-        expressionVariableType = "";
-
-        expressionVariable = "MulS(" + lhs + " " + rhs + ")";
-        expressionVariableType = "Boolean";
-
-        return null;
-    }
-
-    public String putExpressionInTempIfNecessary() {
-        if (!expressionIsPrimary) {
-            String exprTemp = newTempVariable();
-            methodString += indent(exprTemp + " = " + expressionVariable + "\n");
-            return exprTemp;
+    public VaporAST visit(CompareExpression n, SymbolTable symt) {
+        VaporAST lhs = n.f0.accept(this, symt);
+        String tmp1 = newTempVariable();
+        String lhsProg = "";
+        if (lhs.subprogram != "") {
+            lhsProg = lhs.subprogram + "\n";
         }
-        return expressionVariable;
+        lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
+
+        VaporAST rhs = n.f2.accept(this, symt);
+        String tmp2 = newTempVariable();
+        String rhsProg = "";
+        if (rhs.subprogram != "") {
+            rhsProg = rhs.subprogram + "\n";
+        }
+        rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
+
+        String tmp3 = newTempVariable();
+        String mult = indent(tmp3 + " = LtS(" + tmp1 + " " + tmp2 + ")");
+
+        VaporAST ret = new VaporAST();
+        ret.subprogram = lhsProg + rhsProg + mult;
+        ret.tempExprResult = tmp3;
+
+        return ret;
     }
 
-    public Void visit(PrintStatement n, SymbolTable symt) {
-        n.f2.accept(this, symt);
-        methodString += indent("PrintIntS(" + expressionVariable + ")\n");
-        expressionVariable = "";
-        expressionVariableType = "";
-        return null;
+    public VaporAST visit(PlusExpression n, SymbolTable symt) {
+        VaporAST lhs = n.f0.accept(this, symt);
+        String tmp1 = newTempVariable();
+        String lhsProg = "";
+        if (lhs.subprogram != "") {
+            lhsProg = lhs.subprogram + "\n";
+        }
+        lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
+
+        VaporAST rhs = n.f2.accept(this, symt);
+        String tmp2 = newTempVariable();
+        String rhsProg = "";
+        if (rhs.subprogram != "") {
+            rhsProg = rhs.subprogram + "\n";
+        }
+        rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
+
+        String tmp3 = newTempVariable();
+        String mult = indent(tmp3 + " = Add(" + tmp1 + " " + tmp2 + ")");
+
+        VaporAST ret = new VaporAST();
+        ret.subprogram = lhsProg + rhsProg + mult + "\n";
+        ret.tempExprResult = tmp3;
+
+        return ret;
     }
 
-    public Void visit(NotExpression n, SymbolTable symt) {
-        n.f1.accept(this, symt);
-        final String expr = putExpressionInTempIfNecessary();
-        expressionVariable = "";
-        expressionVariableType = "";
+    public VaporAST visit(MinusExpression n, SymbolTable symt) {
+        VaporAST lhs = n.f0.accept(this, symt);
+        String tmp1 = newTempVariable();
+        String lhsProg = "";
+        if (lhs.subprogram != "") {
+            lhsProg = lhs.subprogram + "\n";
+        }
+        lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
 
+        VaporAST rhs = n.f2.accept(this, symt);
+        String tmp2 = newTempVariable();
+        String rhsProg = "";
+        if (rhs.subprogram != "") {
+            rhsProg = rhs.subprogram + "\n";
+        }
+        rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
+
+        String tmp3 = newTempVariable();
+        String mult = indent(tmp3 + " = Sub(" + tmp1 + " " + tmp2 + ")");
+
+        VaporAST ret = new VaporAST();
+        ret.subprogram = lhsProg + rhsProg + mult + "\n";
+        ret.tempExprResult = tmp3;
+
+        return ret;
+    }
+
+    public VaporAST visit(TimesExpression n, SymbolTable symt) {
+        VaporAST lhs = n.f0.accept(this, symt);
+        String tmp1 = newTempVariable();
+        String lhsProg = "";
+        if (lhs.subprogram != "") {
+            lhsProg = lhs.subprogram + "\n";
+        }
+        lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
+
+        VaporAST rhs = n.f2.accept(this, symt);
+        String tmp2 = newTempVariable();
+        String rhsProg = "";
+        if (rhs.subprogram != "") {
+            rhsProg = rhs.subprogram + "\n";
+        }
+        rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
+
+        String tmp3 = newTempVariable();
+        String mult = indent(tmp3 + " = MulS(" + tmp1 + " " + tmp2 + ")");
+
+        VaporAST ret = new VaporAST();
+        ret.subprogram = lhsProg + rhsProg + mult + "\n";
+        ret.tempExprResult = tmp3;
+
+        return ret;
+    }
+
+    public VaporAST visit(PrintStatement n, SymbolTable symt) {
+        VaporAST expr = n.f2.accept(this, symt);
+        VaporAST ret = new VaporAST();
+        ret.subprogram = expr.subprogram;
+        ret.subprogram += indent("PrintIntS(" + expr.tempExprResult + ")\n");
+
+        return ret;
+    }
+
+    public VaporAST visit(NotExpression n, SymbolTable symt) {
         final String tempVar = newTempVariable();
-        methodString += indent(tempVar + " = " + "Sub(1 " + expr + ")\n");
 
-        expressionVariable = tempVar;
-        expressionVariableType = "Boolean";
+        VaporAST expr = n.f1.accept(this, symt);
+        VaporAST ret = new VaporAST();
 
-        return null;
+        ret.subprogram = expr.subprogram;
+        ret.subprogram += tempVar + " = " + "Sub(1 " + expr.tempExprResult + ")\n";
+        ret.tempExprResult = tempVar;
+
+        return ret;
     }
 
     private String indent(String str) {
