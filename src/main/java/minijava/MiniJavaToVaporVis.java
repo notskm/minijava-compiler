@@ -386,6 +386,21 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
         return null;
     }
 
+    public Void visit(NotExpression n, SymbolTable symt) {
+        n.f1.accept(this, symt);
+        final String expr = putExpressionInTempIfNecessary();
+        expressionVariable = "";
+        expressionVariableType = "";
+
+        final String tempVar = newTempVariable();
+        methodString += indent(tempVar + " = " + "Sub(1 " + expr + ")\n");
+
+        expressionVariable = tempVar;
+        expressionVariableType = "Boolean";
+
+        return null;
+    }
+
     private String indent(String str) {
         String indented = "";
 
