@@ -416,7 +416,6 @@ public class MiniJavaToVaporVis extends GJDepthFirst<Void, SymbolTable> {
 
     private void endScope() {
         tempVariableNumber = 0;
-        ifLabelNumber = 1;
         endIndent();
     }
 }
