@@ -2,6 +2,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -63,33 +64,33 @@ public class IntegrationTest {
         }
     }
 
-    // @ParameterizedTest
-    // @ValueSource(strings = { "Factorial", "BinaryTree" })
-    // public void testConversionToVaporValidPrograms(String file) {
-    // final String filename = "programs/java/" + file + ".java";
-    // final String vaporFilename = "programs/vapor/" + file + ".vapor";
-    // try (
-    // FileInputStream fStream = new FileInputStream(filename);
-    // FileInputStream vapor = new FileInputStream(vaporFilename);) {
-    // MiniJavaParser.ReInit(fStream);
+    @ParameterizedTest
+    @ValueSource(strings = { "Factorial", "MoreThan4" })
+    public void testConversionToVaporValidPrograms(String file) {
+        final String filename = "programs/java/" + file + ".java";
+        final String vaporFilename = "programs/vapor/" + file + ".vapor";
+        try (
+                FileInputStream fStream = new FileInputStream(filename);
+                FileInputStream vapor = new FileInputStream(vaporFilename);) {
+            MiniJavaParser.ReInit(fStream);
 
-    // final Node root = MiniJavaParser.Goal();
-    // final SymTableVis vis = new SymTableVis();
-    // final TypeCheckSimp check = new TypeCheckSimp();
+            final Node root = MiniJavaParser.Goal();
+            final SymTableVis vis = new SymTableVis();
+            final TypeCheckSimp check = new TypeCheckSimp();
 
-    // root.accept(vis);
-    // root.accept(check, vis.symt);
+            root.accept(vis);
+            root.accept(check, vis.symt);
 
-    // final String output = J2V.compileToVapor(root, vis.symt);
+            final String output = J2V.compileToVapor(root, vis.symt);
 
-    // assertEquals(streamToString(vapor), output);
-    // } catch (Exception e) {
-    // fail(e.getMessage());
-    // }
-    // }
+            assertEquals(streamToString(vapor), output);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
 
     @ParameterizedTest
-    @ValueSource(strings = { "Factorial", })
+    @ValueSource(strings = { "Factorial", "MoreThan4", "While" })
     public void testVaporBehavior(String file) {
         final String filename = "programs/java/" + file + ".java";
         final String vaporFilename = "programs/vapor/" + file + ".vapor";
@@ -126,15 +127,15 @@ public class IntegrationTest {
         return new String(bytes);
     }
 
-    // private String streamToString(InputStream stream) {
-    // byte[] bytes = new byte[0];
+    private String streamToString(InputStream stream) {
+        byte[] bytes = new byte[0];
 
-    // try {
-    // bytes = stream.readAllBytes();
-    // } catch (IOException e) {
+        try {
+            bytes = stream.readAllBytes();
+        } catch (IOException e) {
 
-    // }
+        }
 
-    // return new String(bytes);
-    // }
+        return new String(bytes);
+    }
 }

@@ -20,6 +20,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
     private int tempVariableNumber = 0;
     private int ifLabelNumber = 1;
     private int nullLabelNumber = 1;
+    private int whileLabelNumber = 1;
+    private int andLabelNumber = 1;
 
     public MiniJavaToVaporVis(Map<String, List<String>> methodTable) {
         methodTables = methodTable;
@@ -63,7 +65,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
     public VaporAST visit(Goal n, SymbolTable symt) {
         VaporAST ret = new VaporAST();
 
-        ret.subprogram = methodTablesToVapor();
+        ret.subprogram = "\n";
+        ret.subprogram += methodTablesToVapor() + "\n";
 
         ret.subprogram += n.f0.accept(this, symt).subprogram;
         for (Node node : n.f1.nodes) {
@@ -95,11 +98,9 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         ret.subprogram += "func Main()\n";
         ret.subprogram += varDeclarations.subprogram;
         ret.subprogram += statements.subprogram;
-        ret.subprogram += indent("ret\n\n");
+        ret.subprogram += indent("ret\n");
 
         endScope();
-
-        // System.out.println(ret.subprogram);
 
         currentClass = null;
         return ret;
@@ -153,8 +154,6 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         ret.subprogram += varDeclarations.subprogram;
         ret.subprogram += methodDeclarations.subprogram;
 
-        System.out.println(ret.subprogram);
-
         currentClass = null;
         return ret;
     }
@@ -193,8 +192,19 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         ret.subprogram += "func " + className + "." + methodName + "(" + arguments + ")\n";
         ret.subprogram += varDeclarations.subprogram;
         ret.subprogram += statements.subprogram;
-        ret.subprogram += indent(returnExpr.subprogram);
-        ret.subprogram += "ret " + returnExpr.tempExprResult + "\n";
+        if (returnExpr.subprogram != "") {
+            ret.subprogram += indent(returnExpr.subprogram);
+        }
+        // String tmp = newTempVariable();
+        // ret.subprogram += indent(tmp + " = " + returnExpr.tempExprResult + "\n");
+        // ret.subprogram += indent("ret " + tmp + "\n");
+        String tmp = returnExpr.tempExprResult;
+        if (returnExpr.exprType == VaporAST.Kind.Deref) {
+            tmp = newTempVariable();
+            ret.subprogram += indent(tmp + " = " + returnExpr.tempExprResult + "\n");
+        }
+        ret.subprogram += indent("ret " + returnExpr.tempExprResult + "\n");
+        ret.subprogram = "\n" + ret.subprogram;
 
         endScope();
 
@@ -257,21 +267,33 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
     // TODO: Either make use of argument passing or a member variable to
     // tell which variable to assign to.
     public VaporAST visit(AssignmentStatement n, SymbolTable symt) {
-        final String lhs = n.f0.f0.tokenImage;
-
         VaporAST rhs = n.f2.accept(this, symt);
-        String tmp1 = newTempVariable();
         String rhsProg = "";
         if (rhs.subprogram != "") {
-            rhsProg = rhs.subprogram + "\n";
+            rhsProg = rhs.subprogram;
         }
-        rhsProg += indent(tmp1 + " = " + rhs.tempExprResult + "\n");
 
-        String assign = indent(lhs + " = " + tmp1);
+        VaporAST lhs = n.f0.accept(this, symt);
+        String lhsProg = "";
+        if (lhs.subprogram != "") {
+            lhsProg = lhs.subprogram;
+        }
+
+        String assign = indent(lhs.tempExprResult + " = " + rhs.tempExprResult + "\n");
+
+        String errorCheck = "";
+        // if (rhs.exprType == VaporAST.Kind.Call) {
+        // String nullLabel = newNullLabel();
+        // errorCheck = indent("if " + lhs.tempExprResult + " goto :" + nullLabel +
+        // "\n");
+        // beginIndent();
+        // errorCheck += indent("Error(\"null pointer\")\n");
+        // endIndent();
+        // errorCheck += indent(nullLabel + ":\n");
+        // }
 
         VaporAST ret = new VaporAST();
-        ret.subprogram = rhsProg + assign + "\n";
-        ret.tempExprResult = lhs;
+        ret.subprogram = rhsProg + lhsProg + assign + errorCheck;
 
         return ret;
     }
@@ -280,7 +302,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         VaporAST ret = new VaporAST();
         ret.tempExprResult = n.f0.tokenImage;
         ret.tempExprType = "Int";
-        ret.tempType = VaporAST.Type.trivial;
+        ret.exprType = VaporAST.Kind.Trivial;
         return ret;
     }
 
@@ -288,7 +310,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         VaporAST ret = new VaporAST();
         ret.tempExprResult = "1";
         ret.tempExprType = "Boolean";
-        ret.tempType = VaporAST.Type.trivial;
+        ret.exprType = VaporAST.Kind.Trivial;
         return ret;
     }
 
@@ -296,16 +318,29 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         VaporAST ret = new VaporAST();
         ret.tempExprResult = "0";
         ret.tempExprType = "Boolean";
-        ret.tempType = VaporAST.Type.trivial;
+        ret.exprType = VaporAST.Kind.Trivial;
         return ret;
     }
 
     public VaporAST visit(Identifier n, SymbolTable symt) {
-        VaporAST ret = new VaporAST();
-        ret.tempExprResult = n.f0.tokenImage;
-        ret.tempExprType = currentMethod.lookup(ret.tempExprResult);
-        ret.tempType = VaporAST.Type.trivial;
-        return ret;
+        final boolean isClass = symt.getClassBinding(n.f0.tokenImage) != null;
+        final boolean isMethodVar = currentMethod.hasVariable(n.f0.tokenImage);
+        final boolean isField = !(isClass || isMethodVar);
+
+        if (!isField) {
+            VaporAST ret = new VaporAST();
+            ret.tempExprResult = n.f0.tokenImage;
+            ret.tempExprType = currentMethod.lookup(ret.tempExprResult);
+            ret.exprType = VaporAST.Kind.Trivial;
+            return ret;
+        } else {
+            final int offset = currentClass.getFieldOffset(n.f0.tokenImage);
+            VaporAST ret = new VaporAST();
+            ret.tempExprResult = "[this" + "+" + offset + "]";
+            ret.tempExprType = currentClass.lookup(n.f0.tokenImage);
+            ret.exprType = VaporAST.Kind.Deref;
+            return ret;
+        }
     }
 
     public VaporAST visit(Statement n, SymbolTable symt) {
@@ -331,20 +366,63 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         ifLabelNumber++;
 
         VaporAST expr = n.f2.accept(this, symt);
-        beginIndent();
-        VaporAST trueStatement = n.f4.accept(this, symt);
-        VaporAST falseStatement = n.f6.accept(this, symt);
-        endIndent();
 
         VaporAST ret = new VaporAST();
 
-        ret.subprogram = expr.subprogram + "\n";
-        ret.subprogram += indent("if0 " + expr.tempExprResult + " goto :" + elseLabel + "\n");
-        ret.subprogram += trueStatement.subprogram + "\n";
+        ret.subprogram = expr.subprogram;
+        String tmp = expr.tempExprResult;
+        if (expr.exprType != VaporAST.Kind.Trivial) {
+            tmp = newTempVariable();
+            ret.subprogram += indent(tmp + " = " + expr.tempExprResult + "\n");
+        }
+        ret.subprogram += indent("if0 " + tmp + " goto :" + elseLabel + "\n");
+
+        beginIndent();
+        VaporAST trueStatement = n.f4.accept(this, symt);
+        ret.subprogram += trueStatement.subprogram;
         ret.subprogram += indent("goto :" + endLabel + "\n");
+        endIndent();
+
         ret.subprogram += indent(elseLabel + ":\n");
+
+        beginIndent();
+        VaporAST falseStatement = n.f6.accept(this, symt);
         ret.subprogram += falseStatement.subprogram;
+        endIndent();
+
         ret.subprogram += indent(endLabel + ":\n");
+
+        return ret;
+    }
+
+    public VaporAST visit(WhileStatement n, SymbolTable symt) {
+        final int labelNum = newWhileLabelNumber();
+        final String whileTopLabel = "while" + labelNum + "_top";
+        final String whileEndLabel = "while" + labelNum + "_end";
+
+        VaporAST ret = new VaporAST();
+
+        ret.subprogram += indent(whileTopLabel + ":\n");
+
+        VaporAST testExpr = n.f2.accept(this, symt);
+
+        ret.subprogram += testExpr.subprogram;
+
+        String tmp = testExpr.tempExprResult;
+        if (testExpr.exprType != VaporAST.Kind.Trivial) {
+            tmp = newTempVariable();
+            ret.subprogram += indent(tmp + " = " + testExpr.tempExprResult + "\n");
+        }
+
+        ret.subprogram += indent("if0 " + tmp + " goto :" + whileEndLabel + "\n");
+
+        beginIndent();
+        VaporAST statement = n.f4.accept(this, symt);
+        ret.subprogram += statement.subprogram;
+        ret.subprogram += indent("goto :" + whileTopLabel + "\n");
+        endIndent();
+
+        ret.subprogram += indent(whileEndLabel + ":\n");
 
         return ret;
     }
@@ -369,133 +447,230 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
 
         VaporAST ret = new VaporAST();
         ret.subprogram = expr.subprogram;
-        ret.tempExprResult = expr.tempExprResult;
+
+        String tmp1 = "";
+        if (expr.exprType == VaporAST.Kind.Trivial) {
+            tmp1 = expr.tempExprResult;
+        } else {
+            tmp1 = newTempVariable();
+            ret.subprogram += indent(tmp1 + " = " + expr.tempExprResult + "\n");
+        }
+        ret.tempExprResult = tmp1;
 
         for (Node node : n.f1.nodes) {
             VaporAST nodeAst = node.accept(this, symt);
+            String tmpRest = "";
+
+            if (nodeAst.exprType == VaporAST.Kind.Trivial) {
+                tmpRest = nodeAst.tempExprResult;
+            } else {
+                tmpRest = newTempVariable();
+                ret.subprogram += indent(tmpRest + " = " + nodeAst.tempExprResult + "\n");
+            }
+
             ret.subprogram += nodeAst.subprogram;
-            ret.tempExprResult += " " + nodeAst.tempExprResult;
+            ret.tempExprResult += " " + tmpRest;
         }
 
         return ret;
     }
 
     public VaporAST visit(ExpressionRest n, SymbolTable symt) {
-        return n.f1.accept(this, null);
+        return n.f1.accept(this, symt);
     }
 
     public VaporAST visit(MessageSend n, SymbolTable symt) {
         VaporAST primaryExpr = n.f0.accept(this, symt);
-        VaporAST method = n.f2.accept(this, symt);
+        String method = n.f2.f0.tokenImage;
+
+        final int methodIndex = methodTables.get(primaryExpr.tempExprType).indexOf(method);
+
+        final String tmp1 = newTempVariable();
+
+        String program = primaryExpr.subprogram;
+        program += indent(tmp1 + " = [" + primaryExpr.tempExprResult + "]\n");
+        program += indent(tmp1 + " = [" + tmp1 + "+" + methodIndex * 4 + "]\n");
+
         VaporAST args = n.f4.accept(this, symt);
         if (args == null) {
             args = new VaporAST();
         }
-
-        final int methodIndex = methodTables.get(primaryExpr.tempExprType).indexOf(method.tempExprResult);
-
-        final String tmp1 = newTempVariable();
-        final String tmp2 = newTempVariable();
-        String program = primaryExpr.subprogram;
         program += args.subprogram;
-        program += indent(tmp1 + " = [" + primaryExpr.tempExprResult + "]\n");
-        program += indent(tmp1 + " = [" + tmp1 + "+" + methodIndex + "]\n");
 
         String call = "call " + tmp1 + "(" + primaryExpr.tempExprResult;
         if (args.tempExprResult != "") {
             call += " " + args.tempExprResult;
         }
         call += ")";
-        program += indent(tmp2 + " = " + call + "\n");
 
         VaporAST ret = new VaporAST();
         ret.subprogram = program;
-        ret.tempExprResult = tmp2;
+        ret.tempExprResult = call;
+        ret.tempExprType = symt.getClassBinding(primaryExpr.tempExprType).getMethod(method + "()")
+                .getReturnType();
+        ret.exprType = VaporAST.Kind.Call;
         return ret;
     }
 
     public VaporAST visit(CompareExpression n, SymbolTable symt) {
         VaporAST lhs = n.f0.accept(this, symt);
-        String tmp1 = newTempVariable();
         String lhsProg = "";
+        String tmp1 = "";
         if (lhs.subprogram != "") {
             lhsProg = lhs.subprogram + "\n";
         }
-        lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
+
+        if (lhs.exprType == VaporAST.Kind.Trivial) {
+            tmp1 = lhs.tempExprResult;
+        } else {
+            tmp1 = newTempVariable();
+            lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
+        }
 
         VaporAST rhs = n.f2.accept(this, symt);
-        String tmp2 = newTempVariable();
         String rhsProg = "";
+        String tmp2 = "";
         if (rhs.subprogram != "") {
             rhsProg = rhs.subprogram + "\n";
         }
-        rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
 
-        String tmp3 = newTempVariable();
-        String mult = indent(tmp3 + " = LtS(" + tmp1 + " " + tmp2 + ")");
+        if (rhs.exprType == VaporAST.Kind.Trivial) {
+            tmp2 = rhs.tempExprResult;
+        } else {
+            tmp2 = newTempVariable();
+            rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
+        }
 
         VaporAST ret = new VaporAST();
-        ret.subprogram = lhsProg + rhsProg + mult;
-        ret.tempExprResult = tmp3;
+        ret.subprogram = lhsProg + rhsProg;
+        ret.tempExprResult = "LtS(" + tmp1 + " " + tmp2 + ")";
+        ret.tempExprType = "Boolean";
+        ret.exprType = VaporAST.Kind.Builtin;
 
         return ret;
     }
 
     public VaporAST visit(PlusExpression n, SymbolTable symt) {
         VaporAST lhs = n.f0.accept(this, symt);
-        String tmp1 = newTempVariable();
         String lhsProg = "";
+        String tmp1 = "";
         if (lhs.subprogram != "") {
-            lhsProg = lhs.subprogram + "\n";
+            lhsProg = lhs.subprogram;
         }
-        lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
+
+        if (lhs.exprType == VaporAST.Kind.Trivial) {
+            tmp1 = lhs.tempExprResult;
+        } else {
+            tmp1 = newTempVariable();
+            lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
+        }
 
         VaporAST rhs = n.f2.accept(this, symt);
-        String tmp2 = newTempVariable();
         String rhsProg = "";
+        String tmp2 = "";
         if (rhs.subprogram != "") {
-            rhsProg = rhs.subprogram + "\n";
+            rhsProg = rhs.subprogram;
         }
-        rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
 
-        String tmp3 = newTempVariable();
-        String mult = indent(tmp3 + " = Add(" + tmp1 + " " + tmp2 + ")");
+        if (rhs.exprType == VaporAST.Kind.Trivial) {
+            tmp2 = rhs.tempExprResult;
+        } else {
+            tmp2 = newTempVariable();
+            rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
+        }
 
         VaporAST ret = new VaporAST();
-        ret.subprogram = lhsProg + rhsProg + mult + "\n";
-        ret.tempExprResult = tmp3;
+        ret.subprogram = lhsProg + rhsProg;
+        ret.tempExprResult = "Add(" + tmp1 + " " + tmp2 + ")";
+        ret.tempExprType = "Boolean";
+        ret.exprType = VaporAST.Kind.Builtin;
 
         return ret;
     }
 
     public VaporAST visit(MinusExpression n, SymbolTable symt) {
         VaporAST lhs = n.f0.accept(this, symt);
-        String tmp1 = newTempVariable();
         String lhsProg = "";
+        String tmp1 = "";
         if (lhs.subprogram != "") {
-            lhsProg = lhs.subprogram + "\n";
+            lhsProg = lhs.subprogram;
         }
-        lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
+
+        if (lhs.exprType == VaporAST.Kind.Trivial) {
+            tmp1 = lhs.tempExprResult;
+        } else {
+            tmp1 = newTempVariable();
+            lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
+        }
 
         VaporAST rhs = n.f2.accept(this, symt);
-        String tmp2 = newTempVariable();
         String rhsProg = "";
+        String tmp2 = "";
         if (rhs.subprogram != "") {
-            rhsProg = rhs.subprogram + "\n";
+            rhsProg = rhs.subprogram;
         }
-        rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
 
-        String tmp3 = newTempVariable();
-        String mult = indent(tmp3 + " = Sub(" + tmp1 + " " + tmp2 + ")");
+        if (rhs.exprType == VaporAST.Kind.Trivial) {
+            tmp2 = rhs.tempExprResult;
+        } else {
+            tmp2 = newTempVariable();
+            rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
+        }
 
         VaporAST ret = new VaporAST();
-        ret.subprogram = lhsProg + rhsProg + mult + "\n";
-        ret.tempExprResult = tmp3;
+        ret.subprogram = lhsProg + rhsProg;
+        ret.tempExprResult = "Sub(" + tmp1 + " " + tmp2 + ")";
+        ret.tempExprType = "Boolean";
+        ret.exprType = VaporAST.Kind.Builtin;
 
         return ret;
     }
 
     public VaporAST visit(TimesExpression n, SymbolTable symt) {
+        VaporAST lhs = n.f0.accept(this, symt);
+        String lhsProg = "";
+        String tmp1 = "";
+        if (lhs.subprogram != "") {
+            lhsProg = lhs.subprogram;
+        }
+
+        if (lhs.exprType == VaporAST.Kind.Trivial) {
+            tmp1 = lhs.tempExprResult;
+        } else {
+            tmp1 = newTempVariable();
+            lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
+        }
+
+        VaporAST rhs = n.f2.accept(this, symt);
+        String rhsProg = "";
+        String tmp2 = "";
+        if (rhs.subprogram != "") {
+            rhsProg = rhs.subprogram;
+        }
+
+        if (rhs.exprType == VaporAST.Kind.Trivial) {
+            tmp2 = rhs.tempExprResult;
+        } else {
+            tmp2 = newTempVariable();
+            rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
+        }
+
+        VaporAST ret = new VaporAST();
+        ret.subprogram = lhsProg + rhsProg;
+        ret.tempExprResult = "MulS(" + tmp1 + " " + tmp2 + ")";
+        ret.tempExprType = "Boolean";
+        ret.exprType = VaporAST.Kind.Builtin;
+
+        return ret;
+    }
+
+    public VaporAST visit(AndExpression n, SymbolTable symt) {
+        final int labelNum = newAndLabelNumber();
+        final String elseLabel = "ss" + labelNum + "_else";
+        final String endLabel = "ss" + labelNum + "_end";
+
+        VaporAST ret = new VaporAST();
+
         VaporAST lhs = n.f0.accept(this, symt);
         String tmp1 = newTempVariable();
         String lhsProg = "";
@@ -504,6 +679,10 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         }
         lhsProg += indent(tmp1 + " = " + lhs.tempExprResult + "\n");
 
+        ret.subprogram += lhsProg;
+        ret.subprogram += indent("if0 " + tmp1 + " goto :" + elseLabel + "\n");
+        beginIndent();
+
         VaporAST rhs = n.f2.accept(this, symt);
         String tmp2 = newTempVariable();
         String rhsProg = "";
@@ -512,12 +691,20 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         }
         rhsProg += indent(tmp2 + " = " + rhs.tempExprResult + "\n");
 
-        String tmp3 = newTempVariable();
-        String mult = indent(tmp3 + " = MulS(" + tmp1 + " " + tmp2 + ")");
+        ret.subprogram += rhsProg;
+        ret.subprogram += indent("goto :" + endLabel + "\n");
 
-        VaporAST ret = new VaporAST();
-        ret.subprogram = lhsProg + rhsProg + mult + "\n";
-        ret.tempExprResult = tmp3;
+        endIndent();
+
+        ret.subprogram += indent(elseLabel + ":\n");
+
+        beginIndent();
+        ret.subprogram += indent(tmp2 + " = 0\n");
+        endIndent();
+
+        ret.subprogram += indent(endLabel + ":\n");
+        ret.tempExprResult = tmp2;
+        ret.tempExprType = "Boolean";
 
         return ret;
     }
@@ -525,21 +712,38 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
     public VaporAST visit(PrintStatement n, SymbolTable symt) {
         VaporAST expr = n.f2.accept(this, symt);
         VaporAST ret = new VaporAST();
+
         ret.subprogram = expr.subprogram;
-        ret.subprogram += indent("PrintIntS(" + expr.tempExprResult + ")\n");
+
+        String tmp = expr.tempExprResult;
+        if (expr.exprType != VaporAST.Kind.Trivial) {
+            tmp = newTempVariable();
+            ret.subprogram += indent(tmp + " = " + expr.tempExprResult + "\n");
+        }
+
+        ret.subprogram += indent("PrintIntS(" + tmp + ")\n");
 
         return ret;
     }
 
     public VaporAST visit(NotExpression n, SymbolTable symt) {
-        final String tempVar = newTempVariable();
-
-        VaporAST expr = n.f1.accept(this, symt);
         VaporAST ret = new VaporAST();
 
+        VaporAST expr = n.f1.accept(this, symt);
+
         ret.subprogram = expr.subprogram;
-        ret.subprogram += tempVar + " = " + "Sub(1 " + expr.tempExprResult + ")\n";
-        ret.tempExprResult = tempVar;
+
+        String tmp = expr.tempExprResult;
+        if (expr.exprType != VaporAST.Kind.Trivial) {
+            tmp = newTempVariable();
+            ret.subprogram += indent(tmp + " = " + expr.tempExprResult + "\n");
+        }
+
+        // ret.subprogram += indent(tempVar + " = " + "Sub(1 " + tmp + ")\n");
+
+        ret.tempExprResult = "Sub(1 " + tmp + ")";
+        ret.tempExprType = "Boolean";
+        ret.exprType = VaporAST.Kind.Builtin;
 
         return ret;
     }
@@ -558,6 +762,30 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         final String temp = "t." + tempVariableNumber;
         tempVariableNumber++;
         return temp;
+    }
+
+    private int newWhileLabelNumber() {
+        int ret = whileLabelNumber;
+        whileLabelNumber++;
+        return ret;
+    }
+
+    private int newIfLabelNumber() {
+        int ret = ifLabelNumber;
+        ifLabelNumber++;
+        return ret;
+    }
+
+    private int newAndLabelNumber() {
+        int ret = andLabelNumber;
+        andLabelNumber++;
+        return ret;
+    }
+
+    private String newNullLabel() {
+        int ret = nullLabelNumber;
+        nullLabelNumber++;
+        return "null" + ret;
     }
 
     private void beginIndent() {

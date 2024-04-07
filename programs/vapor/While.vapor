@@ -1,0 +1,10 @@
+func Main()
+  i = 0
+  while1_top:
+    t.0 = LtS(i 5)
+    if0 t.0 goto :while1_end
+      i = Add(i 1)
+      PrintIntS(i)
+    goto :while1_top
+  while1_end:
+  ret

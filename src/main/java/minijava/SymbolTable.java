@@ -30,8 +30,13 @@ public class SymbolTable {
 
         private String name;
         private Map<String, String> fields = new HashMap<>();
+        private Map<String, Integer> fieldOrder = new HashMap<>();
         private Map<String, MethodBinding> methods = new HashMap<>();
         private String baseClass = "";
+
+        public int getFieldOffset(String field) {
+            return fieldOrder.get(field) * 4;
+        }
 
         public Collection<MethodBinding> getMethods() {
             return methods.values();
@@ -47,6 +52,7 @@ public class SymbolTable {
             }
 
             fields.put(name, type);
+            fieldOrder.put(name, fields.size() - 1);
             return true;
         }
 
@@ -146,7 +152,7 @@ public class SymbolTable {
             return true;
         }
 
-        private boolean hasVariable(String name) {
+        public boolean hasVariable(String name) {
             if (localVariables.containsKey(name)) {
                 return true;
             }

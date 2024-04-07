@@ -1,12 +1,12 @@
 package minijava;
 
 public class VaporAST {
-    public enum Type {
-        trivial, nontrivial
+    public enum Kind {
+        Trivial, Builtin, Call, Deref, None
     }
 
     public String tempExprResult = "";
     public String tempExprType = "";
-    public Type tempType = null;
     public String subprogram = "";
+    public Kind exprType = Kind.None;
 }
