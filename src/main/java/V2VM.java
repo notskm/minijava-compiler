@@ -3,29 +3,21 @@ import cs132.vapor.ast.VBuiltIn.Op;
 import cs132.vapor.ast.VFunction;
 import cs132.vapor.ast.VaporProgram;
 import cs132.vapor.parser.VaporParser;
+import minijava.VaporToVaporMVis;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 
 public class V2VM {
     public static void main(String[] args) {
-        Typecheck typechecker = new Typecheck();
-
-        if (typechecker.check()) {
-            final String program = J2V.compileToVapor(typechecker.root, typechecker.symt);
-            final ByteArrayInputStream reader = new ByteArrayInputStream(program.getBytes());
-
-            try {
-                final VaporProgram vaporProgram = parseVapor(reader, System.err);
-                for (VFunction f : vaporProgram.functions) {
-                    System.out.println(f.ident);
-                }
-            } catch (IOException e) {
-                System.err.println(e.getMessage());
-            }
+        try {
+            final VaporProgram vaporProgram = parseVapor(System.in, System.err);
+            VaporToVaporMVis vaporCompiler = new VaporToVaporMVis();
+            vaporCompiler.toVaporM(vaporProgram);
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
         }
     }
 
