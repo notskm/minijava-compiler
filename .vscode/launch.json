@@ -2,12 +2,38 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Launch Java Program",
+            "name": "Typecheck",
             "request": "launch",
             "mainClass": "Typecheck",
+            "projectName": "hw2",
             "args": [
                 "<",
-                "programs/java/Factorial.java"
+                "programs/java/Factorial.java",
+                "-v"
+            ],
+        },
+        {
+            "type": "java",
+            "name": "J2V",
+            "request": "launch",
+            "mainClass": "J2V",
+            "projectName": "hw2",
+            "args": [
+                "<",
+                "programs/java/Factorial.java",
+            ],
+        },
+        {
+            "type": "java",
+            "name": "V2VM",
+            "request": "launch",
+            "mainClass": "V2VM",
+            "projectName": "hw2",
+            "args": [
+                "<",
+                "programs/vapor/Factorial.vapor",
+                ">",
+                "test.out"
             ],
         }
     ]
