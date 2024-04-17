@@ -21,7 +21,8 @@ public class IntegrationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort", "LinearSearch", "LinkedList", "QuickSort",
+    @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort",
+            "LinearSearch", "LinkedList", "QuickSort",
             "TreeVisitor", "MoreThan4", "OverrideVariable", "OverrideMethod" })
     public void testTypecheckingValidPrograms(String file) {
         final String filename = "programs/java/" + file + ".java";
@@ -43,9 +44,12 @@ public class IntegrationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort", "LinearSearch", "LinkedList", "QuickSort",
-            "TreeVisitor", "TreeVisitor", "MoreThan4", "Overloading", "OverloadingInheritance", "OverloadingIndirect",
-            "DistinctMain", "DistinctClasses", "RealTypes", "OverrideParameter", "DistinctMethods" })
+    @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort",
+            "LinearSearch", "LinkedList", "QuickSort",
+            "TreeVisitor", "TreeVisitor", "MoreThan4", "Overloading",
+            "OverloadingInheritance", "OverloadingIndirect",
+            "DistinctMain", "DistinctClasses", "RealTypes", "OverrideParameter",
+            "DistinctMethods" })
     public void testTypecheckingInvalidPrograms(String file) {
         final String filename = "programs/java/" + file + "-error.java";
         try (FileInputStream fStream = new FileInputStream(filename);) {
@@ -65,7 +69,9 @@ public class IntegrationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "Factorial", "MoreThan4" })
+    @ValueSource(strings = { "Factorial", "MoreThan4", "BubbleSort",
+            "LinearSearch", "QuickSort",
+            "BinaryTree", "LinkedList", "TreeVisitor" })
     public void testConversionToVaporValidPrograms(String file) {
         final String filename = "programs/java/" + file + ".java";
         final String vaporFilename = "programs/vapor/" + file + ".vapor";
@@ -90,7 +96,9 @@ public class IntegrationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "Factorial", "MoreThan4", "While" })
+    @ValueSource(strings = { "Factorial", "MoreThan4", "While", "BubbleSort",
+            "LinearSearch", "QuickSort",
+            "BinaryTree", "LinkedList", "TreeVisitor" })
     public void testVaporBehavior(String file) {
         final String filename = "programs/java/" + file + ".java";
         final String vaporFilename = "programs/vapor/" + file + ".vapor";
@@ -118,12 +126,15 @@ public class IntegrationTest {
         }
     }
 
-    private String runVaporProgram(String filename) throws IOException, InterruptedException {
+    private String runVaporProgram(String filename) throws IOException,
+            InterruptedException {
         Runtime rt = Runtime.getRuntime();
         String[] commands = { "java", "-jar", "tools/vapor.jar", "run", filename };
         Process proc = rt.exec(commands, null);
         byte[] bytes = proc.getInputStream().readAllBytes();
         proc.waitFor();
+        proc.getInputStream().close();
+        proc.destroyForcibly();
         return new String(bytes);
     }
 

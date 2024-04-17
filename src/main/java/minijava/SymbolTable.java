@@ -35,7 +35,18 @@ public class SymbolTable {
         private String baseClass = "";
 
         public int getFieldOffset(String field) {
-            return fieldOrder.get(field) * 4;
+            final Integer fieldIndex = fieldOrder.get(field);
+            if (fieldIndex != null) {
+                final ClassBinding base = table.getClassBinding(baseClass);
+                final int baseSize = base != null ? base.getSizeInBytes() : 0;
+                return baseSize + fieldIndex * 4 + 4;
+            }
+
+            if (baseClass == "") {
+                return -1;
+            }
+
+            return table.getClassBinding(baseClass).getFieldOffset(field);
         }
 
         public Collection<MethodBinding> getMethods() {
