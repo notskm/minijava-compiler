@@ -1,7 +1,9 @@
 package minijava;
 
+import java.util.Map;
+import java.util.HashMap;
+
 import cs132.vapor.ast.*;
-import cs132.vapor.ast.VFunction.Stack;
 
 public class VaporToVaporMVis {
     int indentLevel = 0;
@@ -35,10 +37,42 @@ public class VaporToVaporMVis {
         String functions = "";
 
         for (VFunction function : vapor.functions) {
-            Stack stack = function.stack;
+            SpillEverywhere allocator = new SpillEverywhere(function);
+
             functions += toLine(
-                    "func " + function.ident + " [in " + stack.in + ", out " + stack.out + ", local " + stack.local
+                    "func " + function.ident + " [in " + allocator.inStackSize + ", out " + allocator.outStackSize
+                            + ", local "
+                            + allocator.stackSize
                             + "]");
+
+            Map<Integer, String> labelIndex = new HashMap<>();
+            for (VCodeLabel label : function.labels) {
+                String l = labelIndex.getOrDefault(label.instrIndex, "");
+                l += label.ident + ":\n";
+                labelIndex.put(label.instrIndex, l);
+            }
+
+            for (Map.Entry<String, String> pair : allocator.calleeMap.entrySet()) {
+                final String paramReg = pair.getKey();
+                final String saveReg = pair.getValue();
+
+                functions += "  " + allocator.localMap.get(saveReg) + " = " + saveReg + "\n";
+                functions += "  " + saveReg + " = " + paramReg + "\n";
+            }
+
+            int i = 0;
+            InstructionVis vis = new InstructionVis();
+            for (VInstr instruction : function.body) {
+                try {
+                    functions += labelIndex.getOrDefault(i, "");
+
+                    final String result = instruction.accept(allocator, vis);
+                    functions += result;
+                } catch (Exception e) {
+                }
+                i++;
+            }
+            functions += "\n";
         }
 
         return functions;

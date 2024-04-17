@@ -1,6 +1,5 @@
 import cs132.util.ProblemException;
 import cs132.vapor.ast.VBuiltIn.Op;
-import cs132.vapor.ast.VFunction;
 import cs132.vapor.ast.VaporProgram;
 import cs132.vapor.parser.VaporParser;
 import minijava.VaporToVaporMVis;
