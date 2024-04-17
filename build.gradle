@@ -11,7 +11,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
     testImplementation 'org.mockito:mockito-core:5.10.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    implementation files('tools/vapor-parser.jar')
+    implementation files('external/vapor-parser.jar')
 }
 
 tasks.named('test', Test) {
