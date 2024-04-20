@@ -12,6 +12,7 @@ import cs132.vapor.ast.VDataSegment;
 import cs132.vapor.ast.VFunction;
 import cs132.vapor.ast.VGoto;
 import cs132.vapor.ast.VInstr;
+import cs132.vapor.ast.VLabelRef;
 import cs132.vapor.ast.VLitInt;
 import cs132.vapor.ast.VLitStr;
 import cs132.vapor.ast.VOperand;
@@ -268,8 +269,19 @@ public class VaporMToMips {
 
         @Override
         public String visit(StaticData data, VMemWrite arg0) throws Throwable {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+            String subprogram = "";
+
+            final Global dest = (Global) (arg0.dest);
+            final int byteOffset = dest.byteOffset;
+
+            String source = arg0.source.toString();
+            if (arg0.source instanceof VLabelRef) {
+                source = "$t9";
+                subprogram += toLine("la $t9 " + arg0.source.toString().substring(1));
+            }
+
+            subprogram += toLine("sw " + source + " " + byteOffset + "(" + dest.base + ")");
+            return subprogram;
         }
 
         @Override
