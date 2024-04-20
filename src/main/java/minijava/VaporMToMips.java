@@ -188,8 +188,7 @@ public class VaporMToMips {
 
         @Override
         public String visit(VGoto arg0) throws Throwable {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+            return toLine("j " + arg0.target.toString().substring(1));
         }
 
         @Override
