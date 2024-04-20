@@ -9,7 +9,8 @@ public class VaporMToMips {
 
     public void toMips(VaporProgram vapor) {
         String dataSegment = compileDataSegments(vapor);
-        System.out.println(dataSegment);
+        String textSegment = compileTextSegment(vapor);
+        System.out.println(dataSegment + textSegment);
     }
 
     private String compileDataSegments(VaporProgram vapor) {
@@ -27,8 +28,18 @@ public class VaporMToMips {
             dataSegment += toLine("");
         }
 
-        dataSegment += toLine("");
         return dataSegment;
+    }
+
+    private String compileTextSegment(VaporProgram vapor) {
+        String textSegment = ".text\n\n";
+        indentLevel++;
+        textSegment += toLine("jal Main");
+        textSegment += toLine("li $v0 10");
+        textSegment += toLine("syscall");
+        indentLevel--;
+
+        return textSegment;
     }
 
     private String toLine(String line) {
