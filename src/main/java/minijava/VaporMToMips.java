@@ -166,8 +166,7 @@ public class VaporMToMips {
 
         @Override
         public String visit(VCall arg0) throws Throwable {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+            return toLine("jalr " + arg0.addr);
         }
 
         @Override
