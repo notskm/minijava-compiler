@@ -1,6 +1,7 @@
 package minijava;
 
 import cs132.vapor.ast.VDataSegment;
+import cs132.vapor.ast.VFunction;
 import cs132.vapor.ast.VOperand;
 import cs132.vapor.ast.VaporProgram;
 
@@ -39,7 +40,52 @@ public class VaporMToMips {
         textSegment += toLine("syscall");
         indentLevel--;
 
+        textSegment += toLine("");
+
+        textSegment += compileFunctions(vapor);
+
         return textSegment;
+    }
+
+    private String compileFunctions(VaporProgram vapor) {
+        String functions = "";
+
+        for (VFunction function : vapor.functions) {
+            functions += compileFunction(function);
+            functions += toLine("");
+        }
+
+        return functions;
+    }
+
+    private String compileFunction(VFunction function) {
+        String func = "";
+        func += function.ident + ":\n";
+        indentLevel++;
+        func += functionPrologue();
+
+        func += functionEpilogue();
+        indentLevel--;
+
+        return func;
+    }
+
+    private String functionPrologue() {
+        String prologue = "";
+        prologue += toLine("sw $fp -8($sp)");
+        prologue += toLine("move $fp $sp");
+        prologue += toLine("subu $sp $sp 8");
+        prologue += toLine("sw $ra -4($fp)");
+        return prologue;
+    }
+
+    private String functionEpilogue() {
+        String epilogue = "";
+        epilogue += toLine("lw $ra -4($fp)");
+        epilogue += toLine("lw $fp -8($fp)");
+        epilogue += toLine("addu $sp $sp 8");
+        epilogue += toLine("jr $ra");
+        return epilogue;
     }
 
     private String toLine(String line) {
