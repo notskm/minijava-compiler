@@ -182,8 +182,9 @@ public class VaporMToMips {
 
         @Override
         public String visit(VMemRead arg0) throws Throwable {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+            final Global source = (Global) (arg0.source);
+            final int byteOffset = source.byteOffset;
+            return toLine("lw " + arg0.dest + " " + byteOffset + "(" + source.base.toString() + ")");
         }
 
         @Override
