@@ -191,8 +191,8 @@ public class VaporMToMips {
 
         @Override
         public String visit(VBranch arg0) throws Throwable {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+            final String mnemonic = arg0.positive ? "bnez" : "beqz";
+            return toLine(mnemonic + " " + arg0.value + " " + arg0.target.ident);
         }
 
         @Override
