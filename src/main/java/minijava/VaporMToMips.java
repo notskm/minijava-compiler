@@ -12,12 +12,14 @@ import cs132.vapor.ast.VDataSegment;
 import cs132.vapor.ast.VFunction;
 import cs132.vapor.ast.VGoto;
 import cs132.vapor.ast.VInstr;
+import cs132.vapor.ast.VLitInt;
 import cs132.vapor.ast.VOperand;
 import cs132.vapor.ast.VReturn;
 import cs132.vapor.ast.VaporProgram;
 import cs132.vapor.ast.VInstr.VisitorR;
 import cs132.vapor.ast.VMemRead;
 import cs132.vapor.ast.VMemWrite;
+import cs132.vapor.ast.VMemRef.Global;
 
 public class VaporMToMips {
     private int indentLevel;
