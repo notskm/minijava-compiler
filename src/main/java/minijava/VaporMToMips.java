@@ -1,9 +1,13 @@
 package minijava;
 
+import java.util.Map;
+import java.util.HashMap;
+
 import cs132.vapor.ast.VAssign;
 import cs132.vapor.ast.VBranch;
 import cs132.vapor.ast.VBuiltIn;
 import cs132.vapor.ast.VCall;
+import cs132.vapor.ast.VCodeLabel;
 import cs132.vapor.ast.VDataSegment;
 import cs132.vapor.ast.VFunction;
 import cs132.vapor.ast.VGoto;
@@ -92,17 +96,32 @@ public class VaporMToMips {
     private String compileFunctionBody(VFunction function) {
         String body = "";
 
+        Map<Integer, String> labelIndex = buildLabelIndex(function);
+
         InstructionVis instructionVis = new InstructionVis();
 
+        int i = 0;
         for (VInstr instruction : function.body) {
             try {
+                body += labelIndex.getOrDefault(i, "");
                 body += instruction.accept(instructionVis);
             } catch (Throwable e) {
 
             }
+            i++;
         }
 
         return body;
+    }
+
+    private Map<Integer, String> buildLabelIndex(VFunction function) {
+        Map<Integer, String> labelIndex = new HashMap<>();
+        for (VCodeLabel label : function.labels) {
+            String l = labelIndex.getOrDefault(label.instrIndex, "");
+            l += label.ident + ":\n";
+            labelIndex.put(label.instrIndex, l);
+        }
+        return labelIndex;
     }
 
     private String functionEpilogue() {
