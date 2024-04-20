@@ -1,9 +1,19 @@
 package minijava;
 
+import cs132.vapor.ast.VAssign;
+import cs132.vapor.ast.VBranch;
+import cs132.vapor.ast.VBuiltIn;
+import cs132.vapor.ast.VCall;
 import cs132.vapor.ast.VDataSegment;
 import cs132.vapor.ast.VFunction;
+import cs132.vapor.ast.VGoto;
+import cs132.vapor.ast.VInstr;
 import cs132.vapor.ast.VOperand;
+import cs132.vapor.ast.VReturn;
 import cs132.vapor.ast.VaporProgram;
+import cs132.vapor.ast.VInstr.VisitorR;
+import cs132.vapor.ast.VMemRead;
+import cs132.vapor.ast.VMemWrite;
 
 public class VaporMToMips {
     private int indentLevel;
@@ -63,7 +73,7 @@ public class VaporMToMips {
         func += function.ident + ":\n";
         indentLevel++;
         func += functionPrologue();
-
+        func += compileFunctionBody(function);
         func += functionEpilogue();
         indentLevel--;
 
@@ -77,6 +87,22 @@ public class VaporMToMips {
         prologue += toLine("subu $sp $sp 8");
         prologue += toLine("sw $ra -4($fp)");
         return prologue;
+    }
+
+    private String compileFunctionBody(VFunction function) {
+        String body = "";
+
+        InstructionVis instructionVis = new InstructionVis();
+
+        for (VInstr instruction : function.body) {
+            try {
+                body += instruction.accept(instructionVis);
+            } catch (Throwable e) {
+
+            }
+        }
+
+        return body;
     }
 
     private String functionEpilogue() {
@@ -99,5 +125,59 @@ public class VaporMToMips {
         }
 
         return newStr;
+    }
+
+    static class InstructionVis extends VisitorR<String, Throwable> {
+        private String toLine(String str) {
+            return "  " + str + "\n";
+        }
+
+        @Override
+        public String visit(VAssign arg0) throws Throwable {
+            return toLine("move " + arg0.dest + " " + arg0.source);
+        }
+
+        @Override
+        public String visit(VCall arg0) throws Throwable {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        }
+
+        @Override
+        public String visit(VBuiltIn arg0) throws Throwable {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        }
+
+        @Override
+        public String visit(VMemWrite arg0) throws Throwable {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        }
+
+        @Override
+        public String visit(VMemRead arg0) throws Throwable {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        }
+
+        @Override
+        public String visit(VBranch arg0) throws Throwable {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        }
+
+        @Override
+        public String visit(VGoto arg0) throws Throwable {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        }
+
+        @Override
+        public String visit(VReturn arg0) throws Throwable {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        }
+
     }
 }
