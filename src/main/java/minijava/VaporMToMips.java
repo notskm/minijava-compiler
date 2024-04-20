@@ -153,7 +153,13 @@ public class VaporMToMips {
 
         @Override
         public String visit(VAssign arg0) throws Throwable {
-            return toLine("move " + arg0.dest + " " + arg0.source);
+            String mnemonic = "move";
+
+            if (arg0.source instanceof VLitInt) {
+                mnemonic = "li";
+            }
+
+            return toLine(mnemonic + " " + arg0.dest + " " + arg0.source);
         }
 
         @Override
