@@ -273,15 +273,18 @@ public class VaporMToMips {
         }
 
         private String addOp(StaticData data, VBuiltIn arg0) {
-            return binOp("addu", data, arg0);
+            final String mnemonic = arg0.args[1] instanceof VLitInt ? "addi" : "add";
+            return binOp(mnemonic, data, arg0);
         }
 
         private String subOp(StaticData data, VBuiltIn arg0) {
-            return binOp("subu", data, arg0);
+            final String mnemonic = arg0.args[1] instanceof VLitInt ? "subi" : "sub";
+            return binOp(mnemonic, data, arg0);
         }
 
         private String mulOp(StaticData data, VBuiltIn arg0) {
-            return binOp("mul", data, arg0);
+            final String mnemonic = arg0.args[1] instanceof VLitInt ? "muli" : "mul";
+            return binOp(mnemonic, data, arg0);
         }
 
         private String compareOp(StaticData data, VBuiltIn arg0) {
@@ -296,8 +299,12 @@ public class VaporMToMips {
             String rhs = arg0.args[1].toString();
 
             if (arg0.args[0] instanceof VLitInt) {
-                subprogram += toLine("li $t9 " + lhs);
-                lhs = "$t9";
+                if (lhs.equals("0")) {
+                    lhs = "$0";
+                } else {
+                    subprogram += toLine("li $t9 " + lhs);
+                    lhs = "$t9";
+                }
             }
             subprogram += toLine(mnemonic + " " + arg0.dest.toString() + " " + lhs + " " + rhs);
 
