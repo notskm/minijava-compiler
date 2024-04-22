@@ -285,8 +285,7 @@ public class VaporMToMips {
         }
 
         private String mulOp(StaticData data, VBuiltIn arg0) {
-            final String mnemonic = arg0.args[1] instanceof VLitInt ? "muli" : "mul";
-            return binOp(mnemonic, data, arg0);
+            return binOp("mul", data, arg0);
         }
 
         private String compareOp(StaticData data, VBuiltIn arg0) {
@@ -388,8 +387,12 @@ public class VaporMToMips {
                 subprogram += toLine("sw $t9 " + pointer);
             } else if (arg0.source instanceof VLitInt) {
                 String val = arg0.source.toString();
-                val = val.equals("0") ? "$0" : val;
-                subprogram += toLine("sw " + val + " " + pointer);
+                if (val.equals("0")) {
+                    subprogram += toLine("sw $0" + " " + pointer);
+                } else {
+                    subprogram += toLine("li $t9 " + val);
+                    subprogram += toLine("sw $t9 " + pointer);
+                }
             }
 
             return subprogram;
