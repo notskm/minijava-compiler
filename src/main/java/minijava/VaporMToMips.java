@@ -104,11 +104,6 @@ public class VaporMToMips {
         prologue += toLine("move $fp $sp");
         prologue += toLine("subu $sp $sp " + totalStackSize);
         prologue += toLine("sw $ra -4($fp)");
-
-        for (int i = 0; i < function.stack.local; i++) {
-            final int val = frameSize + frameOffset - i * wordSize;
-            prologue += toLine("sw $s" + i + " " + val + "($sp)");
-        }
         return prologue;
     }
 
@@ -147,11 +142,6 @@ public class VaporMToMips {
         final int totalStackSize = 8 + function.stack.local * wordSize + function.stack.out * wordSize;
 
         String epilogue = "";
-        for (int i = 0; i < function.stack.local; i++) {
-            final int val = frameSize + frameOffset - i * wordSize;
-            epilogue += toLine("lw $s" + i + " " + val + "($sp)");
-        }
-
         epilogue += toLine("lw $ra -4($fp)");
         epilogue += toLine("lw $fp -8($fp)");
         epilogue += toLine("addu $sp $sp " + totalStackSize);
@@ -370,14 +360,20 @@ public class VaporMToMips {
             String subprogram = "";
 
             final int byteOffset = dest.byteOffset;
+            final String pointer = byteOffset + "(" + dest.base + ")";
 
-            String source = arg0.source.toString();
-            if (arg0.source instanceof VLabelRef) {
-                source = "$t9";
-                subprogram += toLine("la $t9 " + arg0.source.toString().substring(1));
+            if (arg0.source instanceof VVarRef) {
+                subprogram += toLine("sw " + arg0.source.toString() + " " + pointer);
+            } else if (arg0.source instanceof VLabelRef) {
+                final String label = arg0.source.toString().substring(1);
+                subprogram += toLine("la $t9 " + label);
+                subprogram += toLine("sw $t9 " + pointer);
+            } else if (arg0.source instanceof VLitInt) {
+                String val = arg0.source.toString();
+                val = val.equals("0") ? "$0" : val;
+                subprogram += toLine("sw " + val + " " + pointer);
             }
 
-            subprogram += toLine("sw " + source + " " + byteOffset + "(" + dest.base + ")");
             return subprogram;
         }
 
@@ -414,7 +410,7 @@ public class VaporMToMips {
 
         private String loadFromStack(StaticData data, VMemRead arg0, VMemRef.Stack stack) {
             final int offset = stack.index * wordSize;
-            return toLine("lw " + arg0.dest + " " + offset + "($fp)");
+            return toLine("lw " + arg0.dest + " " + offset + "($sp)");
         }
 
         @Override
