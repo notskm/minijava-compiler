@@ -267,6 +267,8 @@ public class VaporMToMips {
                     return mulOp(data, arg0);
                 case "LtS":
                     return compareOp(data, arg0);
+                case "Lt":
+                    return compareOpUnsigned(data, arg0);
                 default:
                     return builtinFunction(data, arg0);
             }
@@ -289,6 +291,11 @@ public class VaporMToMips {
 
         private String compareOp(StaticData data, VBuiltIn arg0) {
             final String mnemonic = arg0.args[1] instanceof VLitInt ? "slti" : "slt";
+            return binOp(mnemonic, data, arg0);
+        }
+
+        private String compareOpUnsigned(StaticData data, VBuiltIn arg0) {
+            final String mnemonic = arg0.args[1] instanceof VLitInt ? "sltiu" : "sltu";
             return binOp(mnemonic, data, arg0);
         }
 
