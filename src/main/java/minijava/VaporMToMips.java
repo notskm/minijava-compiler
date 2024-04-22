@@ -20,8 +20,8 @@ import cs132.vapor.ast.VReturn;
 import cs132.vapor.ast.VaporProgram;
 import cs132.vapor.ast.VInstr.VisitorPR;
 import cs132.vapor.ast.VMemRead;
+import cs132.vapor.ast.VMemRef;
 import cs132.vapor.ast.VMemWrite;
-import cs132.vapor.ast.VMemRef.Global;
 
 public class VaporMToMips {
     private int indentLevel;
@@ -91,9 +91,9 @@ public class VaporMToMips {
         return func;
     }
 
-    final int wordSize = 4;
-    final int frameSize = 4;
-    final int frameOffset = -4;
+    static final int wordSize = 4;
+    static final int frameSize = 4;
+    static final int frameOffset = -4;
 
     private String functionPrologue(VFunction function) {
         final int totalStackSize = 8 + function.stack.local * wordSize + function.stack.out * wordSize;
@@ -124,7 +124,7 @@ public class VaporMToMips {
                 body += labelIndex.getOrDefault(i, "");
                 body += instruction.accept(data, instructionVis);
             } catch (Throwable e) {
-
+                e.printStackTrace();
             }
             i++;
         }
@@ -360,7 +360,7 @@ public class VaporMToMips {
         public String visit(StaticData data, VMemWrite arg0) throws Throwable {
             String subprogram = "";
 
-            final Global dest = (Global) (arg0.dest);
+            final VMemRef.Global dest = (VMemRef.Global) (arg0.dest);
             final int byteOffset = dest.byteOffset;
 
             String source = arg0.source.toString();
@@ -375,9 +375,21 @@ public class VaporMToMips {
 
         @Override
         public String visit(StaticData data, VMemRead arg0) throws Throwable {
-            final Global source = (Global) (arg0.source);
-            final int byteOffset = source.byteOffset;
-            return toLine("lw " + arg0.dest + " " + byteOffset + "(" + source.base.toString() + ")");
+            if (arg0.source instanceof VMemRef.Global) {
+                return loadFromGlobal(data, arg0, (VMemRef.Global) arg0.source);
+            } else {
+                return loadFromStack(data, arg0, (VMemRef.Stack) arg0.source);
+            }
+        }
+
+        private String loadFromGlobal(StaticData data, VMemRead arg0, VMemRef.Global global) {
+            final int byteOffset = global.byteOffset;
+            return toLine("lw " + arg0.dest + " " + byteOffset + "(" + global.base.toString() + ")");
+        }
+
+        private String loadFromStack(StaticData data, VMemRead arg0, VMemRef.Stack stack) {
+            final int offset = stack.index * wordSize;
+            return toLine("lw " + arg0.dest + " " + offset + "($fp)");
         }
 
         @Override
