@@ -33,7 +33,7 @@ public class VaporMToMips {
         String textSegment = compileTextSegment(vapor);
         String builtinFunctions = getBuiltinFunctions();
         String endDataSegment = getEndDataSegment();
-        System.out.println(dataSegment + textSegment + builtinFunctions + endDataSegment);
+        System.out.print(dataSegment + textSegment + builtinFunctions + endDataSegment);
     }
 
     private String compileDataSegments(VaporProgram vapor) {
@@ -213,7 +213,7 @@ public class VaporMToMips {
             final String name = entry.getValue();
             final String literal = entry.getKey();
             final String litWithNewLine = literal.substring(0, literal.length() - 1) + "\\n\"";
-            literals += name + ": .asciiz " + litWithNewLine;
+            literals += toLine(name + ": .asciiz " + litWithNewLine);
         }
         return literals;
     }
