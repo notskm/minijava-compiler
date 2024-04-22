@@ -31,7 +31,8 @@ public class VaporMToMips {
         String dataSegment = compileDataSegments(vapor);
         String textSegment = compileTextSegment(vapor);
         String builtinFunctions = getBuiltinFunctions();
-        System.out.println(dataSegment + textSegment + builtinFunctions);
+        String endDataSegment = getEndDataSegment();
+        System.out.println(dataSegment + textSegment + builtinFunctions + endDataSegment);
     }
 
     private String getBuiltinFunctions() {
@@ -40,6 +41,7 @@ public class VaporMToMips {
         builtins += getErrorFunction();
         builtins += toLine("");
         builtins += getHeapAllocFunction();
+        builtins += toLine("");
         return builtins;
     }
 
@@ -188,6 +190,20 @@ public class VaporMToMips {
         return epilogue;
     }
 
+    private String getEndDataSegment() {
+        String dataSegment = toLine(".data");
+        dataSegment += toLine(".align 0");
+        dataSegment += toLine("_newline: .asciiz \"\\n\"");
+
+        for (int i = 0; i < data.strings.size(); i++) {
+            final String name = "_str" + i;
+            final String val = data.strings.get(name);
+            dataSegment += name + ": .asciiz " + val;
+        }
+
+        return dataSegment;
+    }
+
     private String toLine(String line) {
         return indent(line) + "\n";
     }
@@ -287,7 +303,12 @@ public class VaporMToMips {
                     argString = data.strings.get(operand.toString());
                     if (argString == null) {
                         argString = "_str" + data.strings.size();
-                        data.strings.put(operand.toString(), argString);
+                        String str = operand.toString();
+                        str = str.substring(0, str.length() - 1);
+                        str += "\\n\"";
+                        if (!data.strings.containsValue(str)) {
+                            data.strings.put(argString, str);
+                        }
                     }
                 } else {
                     mnemonic = "move";
