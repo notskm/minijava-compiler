@@ -17,6 +17,7 @@ import cs132.vapor.ast.VLitInt;
 import cs132.vapor.ast.VLitStr;
 import cs132.vapor.ast.VOperand;
 import cs132.vapor.ast.VReturn;
+import cs132.vapor.ast.VVarRef;
 import cs132.vapor.ast.VaporProgram;
 import cs132.vapor.ast.VInstr.VisitorPR;
 import cs132.vapor.ast.VMemRead;
@@ -358,9 +359,16 @@ public class VaporMToMips {
 
         @Override
         public String visit(StaticData data, VMemWrite arg0) throws Throwable {
+            if (arg0.dest instanceof VMemRef.Global) {
+                return storeToGlobal(data, arg0, (VMemRef.Global) arg0.dest);
+            } else {
+                return storeToStack(data, arg0, (VMemRef.Stack) arg0.dest);
+            }
+        }
+
+        private String storeToGlobal(StaticData data, VMemWrite arg0, VMemRef.Global dest) {
             String subprogram = "";
 
-            final VMemRef.Global dest = (VMemRef.Global) (arg0.dest);
             final int byteOffset = dest.byteOffset;
 
             String source = arg0.source.toString();
@@ -370,6 +378,23 @@ public class VaporMToMips {
             }
 
             subprogram += toLine("sw " + source + " " + byteOffset + "(" + dest.base + ")");
+            return subprogram;
+        }
+
+        private String storeToStack(StaticData data, VMemWrite arg0, VMemRef.Stack dest) {
+            String subprogram = "";
+
+            final String source = arg0.source.toString();
+
+            final int offset = dest.index * 4;
+            final String stackPointer = offset + "($sp)";
+
+            if (arg0.source instanceof VVarRef) {
+                subprogram += toLine("sw " + source + " " + stackPointer);
+            } else {
+                subprogram += toLine("li $t9 " + source);
+                subprogram += toLine("sw $t9 " + stackPointer);
+            }
             return subprogram;
         }
 
@@ -406,7 +431,8 @@ public class VaporMToMips {
         @Override
         public String visit(StaticData data, VReturn arg0) throws Throwable {
             // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'visit'");
+            // throw new UnsupportedOperationException("Unimplemented method 'visit'");
+            return "";
         }
     }
 }
