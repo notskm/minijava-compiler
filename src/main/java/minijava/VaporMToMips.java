@@ -83,20 +83,31 @@ public class VaporMToMips {
         String func = "";
         func += function.ident + ":\n";
         indentLevel++;
-        func += functionPrologue();
+        func += functionPrologue(function);
         func += compileFunctionBody(function);
-        func += functionEpilogue();
+        func += functionEpilogue(function);
         indentLevel--;
 
         return func;
     }
 
-    private String functionPrologue() {
+    final int wordSize = 4;
+    final int frameSize = 4;
+    final int frameOffset = -4;
+
+    private String functionPrologue(VFunction function) {
+        final int totalStackSize = 8 + function.stack.local * wordSize + function.stack.out * wordSize;
+
         String prologue = "";
         prologue += toLine("sw $fp -8($sp)");
         prologue += toLine("move $fp $sp");
-        prologue += toLine("subu $sp $sp 8");
+        prologue += toLine("subu $sp $sp " + totalStackSize);
         prologue += toLine("sw $ra -4($fp)");
+
+        for (int i = 0; i < function.stack.local; i++) {
+            final int val = frameSize + frameOffset - i * wordSize;
+            prologue += toLine("sw $s" + i + " " + val + "($sp)");
+        }
         return prologue;
     }
 
@@ -131,11 +142,18 @@ public class VaporMToMips {
         return labelIndex;
     }
 
-    private String functionEpilogue() {
+    private String functionEpilogue(VFunction function) {
+        final int totalStackSize = 8 + function.stack.local * wordSize + function.stack.out * wordSize;
+
         String epilogue = "";
+        for (int i = 0; i < function.stack.local; i++) {
+            final int val = frameSize + frameOffset - i * wordSize;
+            epilogue += toLine("lw $s" + i + " " + val + "($sp)");
+        }
+
         epilogue += toLine("lw $ra -4($fp)");
         epilogue += toLine("lw $fp -8($fp)");
-        epilogue += toLine("addu $sp $sp 8");
+        epilogue += toLine("addu $sp $sp " + totalStackSize);
         epilogue += toLine("jr $ra");
         return epilogue;
     }
