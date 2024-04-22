@@ -285,7 +285,8 @@ public class VaporMToMips {
         }
 
         private String compareOp(StaticData data, VBuiltIn arg0) {
-            return binOp("slti", data, arg0);
+            final String mnemonic = arg0.args[1] instanceof VLitInt ? "slti" : "slt";
+            return binOp(mnemonic, data, arg0);
         }
 
         private String binOp(String mnemonic, StaticData data, VBuiltIn arg0) {
