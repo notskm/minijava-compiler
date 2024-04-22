@@ -30,7 +30,57 @@ public class VaporMToMips {
     public void toMips(VaporProgram vapor) {
         String dataSegment = compileDataSegments(vapor);
         String textSegment = compileTextSegment(vapor);
-        System.out.println(dataSegment + textSegment);
+        String builtinFunctions = getBuiltinFunctions();
+        System.out.println(dataSegment + textSegment + builtinFunctions);
+    }
+
+    private String getBuiltinFunctions() {
+        String builtins = getPrintFunction();
+        builtins += toLine("");
+        builtins += getErrorFunction();
+        builtins += toLine("");
+        builtins += getHeapAllocFunction();
+        return builtins;
+    }
+
+    private String getPrintFunction() {
+        String print = toLine("_print:");
+
+        indentLevel++;
+        print += toLine("li $v0 1   # syscall: print integer");
+        print += toLine("syscall");
+        print += toLine("la $a0 _newline");
+        print += toLine("li $v0 4   # syscall: print string");
+        print += toLine("syscall");
+        print += toLine("jr $ra");
+        indentLevel--;
+
+        return print;
+    }
+
+    private String getErrorFunction() {
+        String error = toLine("_error:");
+
+        indentLevel++;
+        error += toLine("li $v0 4   # syscall: print string");
+        error += toLine("syscall");
+        error += toLine("li $v0 10  # syscall: exit");
+        error += toLine("syscall");
+        indentLevel--;
+
+        return error;
+    }
+
+    private String getHeapAllocFunction() {
+        String heapAlloc = toLine("_heapAlloc:");
+
+        indentLevel++;
+        heapAlloc += toLine("li $v0 9   # syscall: sbrk");
+        heapAlloc += toLine("syscall");
+        heapAlloc += toLine("jr $ra");
+        indentLevel--;
+
+        return heapAlloc;
     }
 
     private String compileDataSegments(VaporProgram vapor) {
