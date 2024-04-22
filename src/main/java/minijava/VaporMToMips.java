@@ -435,7 +435,11 @@ public class VaporMToMips {
 
         private String loadFromStack(StaticData data, VMemRead arg0, VMemRef.Stack stack) {
             final int offset = stack.index * wordSize;
-            return toLine("lw " + arg0.dest + " " + offset + "($sp)");
+            if (stack.region == VMemRef.Stack.Region.In) {
+                return toLine("lw " + arg0.dest + " " + offset + "($fp)");
+            } else {
+                return toLine("lw " + arg0.dest + " " + offset + "($sp)");
+            }
         }
 
         @Override
