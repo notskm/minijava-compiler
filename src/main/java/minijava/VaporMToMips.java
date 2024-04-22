@@ -253,7 +253,11 @@ public class VaporMToMips {
 
         @Override
         public String visit(StaticData data, VCall arg0) throws Throwable {
-            return toLine("jalr " + arg0.addr);
+            if (arg0.addr.toString().equals(":AllocArray")) {
+                return toLine("jal AllocArray");
+            } else {
+                return toLine("jalr " + arg0.addr);
+            }
         }
 
         @Override
