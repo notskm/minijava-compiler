@@ -203,14 +203,19 @@ public class VaporMToMips {
         String dataSegment = toLine(".data");
         dataSegment += toLine(".align 0");
         dataSegment += toLine("_newline: .asciiz \"\\n\"");
-
-        for (int i = 0; i < data.strings.size(); i++) {
-            final String name = "_str" + i;
-            final String val = data.strings.get(name);
-            dataSegment += name + ": .asciiz " + val;
-        }
-
+        dataSegment += compileStringLiterals();
         return dataSegment;
+    }
+
+    private String compileStringLiterals() {
+        String literals = "";
+        for (Map.Entry<String, String> entry : data.strings.entrySet()) {
+            final String name = entry.getValue();
+            final String literal = entry.getKey();
+            final String litWithNewLine = literal.substring(0, literal.length() - 1) + "\\n\"";
+            literals += name + ": .asciiz " + litWithNewLine;
+        }
+        return literals;
     }
 
     private String toLine(String line) {
@@ -298,6 +303,12 @@ public class VaporMToMips {
             return subprogram;
         }
 
+        private String storeStringLiteralAndGetReference(StaticData data, String literal) {
+            final String newRef = "_str" + data.strings.size();
+            final String ref = data.strings.putIfAbsent(literal, newRef);
+            return ref == null ? newRef : ref;
+        }
+
         private String builtinFunction(StaticData data, VBuiltIn arg0) {
             String subprogram = "";
 
@@ -309,16 +320,8 @@ public class VaporMToMips {
                     mnemonic = "li";
                 } else if (operand instanceof VLitStr) {
                     mnemonic = "la";
+                    argString = storeStringLiteralAndGetReference(data, operand.toString());
                     argString = data.strings.get(operand.toString());
-                    if (argString == null) {
-                        argString = "_str" + data.strings.size();
-                        String str = operand.toString();
-                        str = str.substring(0, str.length() - 1);
-                        str += "\\n\"";
-                        if (!data.strings.containsValue(str)) {
-                            data.strings.put(argString, str);
-                        }
-                    }
                 } else {
                     mnemonic = "move";
                 }
