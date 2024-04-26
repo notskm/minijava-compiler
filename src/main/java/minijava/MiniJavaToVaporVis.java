@@ -280,7 +280,8 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         }
         String rhsVar = rhs.tempExprResult;
         if (rhs.exprType == VaporAST.Kind.None
-                || (lhs.exprType == VaporAST.Kind.Deref && rhs.exprType == VaporAST.Kind.Call)) {
+                || (lhs.exprType == VaporAST.Kind.Deref
+                        && (rhs.exprType == VaporAST.Kind.Call || rhs.exprType == VaporAST.Kind.Builtin))) {
             rhsVar = newTempVariable();
             rhsProg += indent(rhsVar + " = " + rhs.tempExprResult + "\n");
         }

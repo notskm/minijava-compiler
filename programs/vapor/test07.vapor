@@ -1,0 +1,32 @@
+
+const vmt_Operator
+  :Operator.compute
+
+
+func Main()
+  t.0 = HeapAllocZ(24)
+  [t.0] = :vmt_Operator
+  if t.0 goto :null1
+    Error("null pointer")
+  null1:
+  t.1 = [t.0]
+  t.1 = [t.1+0]
+  t.2 = call t.1(t.0)
+  PrintIntS(t.2)
+  ret
+
+func Operator.compute(this)
+  [this+12] = 10
+  [this+16] = 20
+  t.0 = [this+12]
+  t.1 = [this+16]
+  t.2 = LtS(t.0 t.1)
+  [this+20] = t.2
+  t.3 = [this+20]
+  if0 t.3 goto :if1_else
+    val = 2
+    goto :if1_end
+  if1_else:
+    val = 1
+  if1_end:
+  ret val
