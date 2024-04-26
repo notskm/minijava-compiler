@@ -451,10 +451,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
         String nullLabel = newNullLabel();
 
         VaporAST identifier = n.f0.accept(this, symt);
-        String idProg = "";
-        if (idProg != "") {
-            idProg = identifier.subprogram;
-        }
+        String idProg = identifier.subprogram;
 
         String idVar = identifier.tempExprResult;
         if (identifier.exprType != VaporAST.Kind.Trivial) {
@@ -520,10 +517,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
 
     public VaporAST visit(ArrayLookup n, SymbolTable symt) {
         VaporAST identifier = n.f0.accept(this, symt);
-        String idProg = "";
-        if (idProg != "") {
-            idProg = identifier.subprogram;
-        }
+        String idProg = identifier.subprogram;
 
         String idVar = identifier.tempExprResult;
         if (identifier.exprType != VaporAST.Kind.Trivial) {
