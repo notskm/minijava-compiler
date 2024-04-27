@@ -23,7 +23,7 @@ public class IntegrationTest {
     @ParameterizedTest
     @ValueSource(strings = { "Factorial", "BinaryTree", "BubbleSort",
             "LinearSearch", "LinkedList", "QuickSort",
-            "TreeVisitor", "MoreThan4", "OverrideVariable", "OverrideMethod" })
+            "TreeVisitor", "MoreThan4", "OverrideVariable", "OverrideMethod", "test66" })
     public void testTypecheckingValidPrograms(String file) {
         final String filename = "programs/java/" + file + ".java";
         try (FileInputStream fStream = new FileInputStream(filename);) {
@@ -39,7 +39,7 @@ public class IntegrationTest {
 
             assertNotEquals("error", output);
         } catch (Exception e) {
-            fail(e.getMessage());
+            fail(e);
         }
     }
 
@@ -91,7 +91,7 @@ public class IntegrationTest {
 
             assertEquals(streamToString(vapor), output);
         } catch (Exception e) {
-            fail(e.getMessage());
+            fail(e);
         }
     }
 

@@ -107,7 +107,7 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         n.f8.accept(this, argu);
 
         final String returnExpression = n.f10.accept(this, argu);
-        if (!returnExpression.equals(returnType)) {
+        if (!isSubtypeOf(returnExpression, returnType, argu)) {
             throw new TypecheckException("Expected " + returnType + " got " + returnExpression);
         }
 
