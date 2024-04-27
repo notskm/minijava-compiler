@@ -49,7 +49,7 @@ public class IntegrationTest {
             "TreeVisitor", "TreeVisitor", "MoreThan4", "Overloading",
             "OverloadingInheritance", "OverloadingIndirect",
             "DistinctMain", "DistinctClasses", "RealTypes", "OverrideParameter",
-            "DistinctMethods" })
+            "DistinctMethods", "NonexistentBase" })
     public void testTypecheckingInvalidPrograms(String file) {
         final String filename = "programs/java/" + file + "-error.java";
         try (FileInputStream fStream = new FileInputStream(filename);) {

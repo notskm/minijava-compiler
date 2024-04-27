@@ -63,6 +63,10 @@ public class TypeCheckSimp extends GJDepthFirst<String, SymbolTable> {
         final String className = n.f1.f0.tokenImage;
         currentClass = argu.getClassBinding(className);
 
+        if (argu.getClassBinding(currentClass.getBaseClass()) == null) {
+            throw new TypecheckException("Base class is not defined");
+        }
+
         n.f5.accept(this, argu);
 
         for (MethodBinding method : currentClass.getMethods()) {
