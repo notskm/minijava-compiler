@@ -3,11 +3,15 @@ package minijava;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class SymbolTable {
     private Map<String, ClassBinding> classes = new HashMap<>();
+    private List<String> classesInOrder = new LinkedList<>();
 
     public boolean addClass(String name) {
         if (classes.containsKey(name)) {
@@ -18,11 +22,50 @@ public class SymbolTable {
         binding.name = name;
         binding.table = this;
         classes.put(name, binding);
+        classesInOrder.add(name);
         return true;
     }
 
     public ClassBinding getClassBinding(String name) {
         return classes.get(name);
+    }
+
+    public Map<String, List<String>> getMethodTables() {
+        Map<String, List<String>> tables = new LinkedHashMap<>();
+
+        for (String className : classesInOrder) {
+            if (getClassBinding(className).methods.get("main") != null) {
+                continue;
+            }
+            List<String> methodTable = getMethodTable(className);
+            tables.put(className, methodTable);
+        }
+
+        return tables;
+    }
+
+    private List<String> getMethodTable(String className) {
+        if (className == "") {
+            return new ArrayList<>();
+        }
+
+        final ClassBinding binding = getClassBinding(className);
+
+        List<String> baseMethodTable = getMethodTable(binding.baseClass);
+        List<String> thisMethodTable = new ArrayList<>();
+
+        for (String methodName : binding.methodsInOrder) {
+            final String name = methodName.substring(0, methodName.length() - 2);
+            final String derivedMethod = binding.name + "." + name;
+            baseMethodTable.replaceAll(str -> str.endsWith("." + name) ? derivedMethod : str);
+            if (!baseMethodTable.contains(derivedMethod)) {
+                thisMethodTable.add(derivedMethod);
+            }
+        }
+
+        baseMethodTable.addAll(thisMethodTable);
+
+        return baseMethodTable;
     }
 
     public class ClassBinding {
@@ -32,6 +75,7 @@ public class SymbolTable {
         private Map<String, String> fields = new HashMap<>();
         private Map<String, Integer> fieldOrder = new HashMap<>();
         private Map<String, MethodBinding> methods = new HashMap<>();
+        private List<String> methodsInOrder = new ArrayList<>();
         private String baseClass = "";
 
         public int getFieldOffset(String field) {
@@ -80,6 +124,7 @@ public class SymbolTable {
             method.classBinding = this;
             method.name = name;
             methods.put(name, method);
+            methodsInOrder.add(name);
             return true;
         }
 
@@ -98,7 +143,7 @@ public class SymbolTable {
 
             ClassBinding baseClassBinding = table.getClassBinding(baseClass);
             if (baseClassBinding != null) {
-                return thisSize + baseClassBinding.getSizeInBytes();
+                return thisSize * 4 + baseClassBinding.getSizeInBytes();
             } else {
                 return thisSize * 4;
             }

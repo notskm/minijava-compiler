@@ -71,7 +71,8 @@ public class IntegrationTest {
     @ParameterizedTest
     @ValueSource(strings = { "Factorial", "MoreThan4", "BubbleSort",
             "LinearSearch", "QuickSort",
-            "BinaryTree", "LinkedList", "TreeVisitor", "test03Add", "test03Mult", "test07", "ArrayLookup" })
+            "BinaryTree", "LinkedList", "TreeVisitor", "test03Add", "test03Mult", "test07", "ArrayLookup",
+            "Inheritance" })
     public void testConversionToVaporValidPrograms(String file) {
         final String filename = "programs/java/" + file + ".java";
         final String vaporFilename = "programs/vapor/" + file + ".vapor";

@@ -1,4 +1,3 @@
-import minijava.MethodTableVis;
 import minijava.MiniJavaToVaporVis;
 import minijava.SymbolTable;
 import minijava.VaporAST;
@@ -6,10 +5,7 @@ import syntaxtree.Node;
 
 public class J2V {
     public static String compileToVapor(Node root, SymbolTable symt) {
-        MethodTableVis methodTableVis = new MethodTableVis();
-        root.accept(methodTableVis);
-
-        MiniJavaToVaporVis vaporVis = new MiniJavaToVaporVis(methodTableVis.methodTables);
+        MiniJavaToVaporVis vaporVis = new MiniJavaToVaporVis(symt.getMethodTables());
         VaporAST vapor = root.accept(vaporVis, symt);
 
         return vapor.subprogram;

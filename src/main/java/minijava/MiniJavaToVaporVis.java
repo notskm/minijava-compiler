@@ -54,7 +54,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
     public String methodTableToVapor(String className, List<String> methods) {
         String table = "const vmt_" + className + "\n";
         for (String method : methods) {
-            table += "  :" + className + "." + method + "\n";
+            table += "  :" + method + "\n";
         }
 
         return table;
@@ -208,7 +208,7 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
             ret.subprogram += returnExpr.subprogram;
         }
         String tmp = returnExpr.tempExprResult;
-        if (returnExpr.exprType == VaporAST.Kind.Deref) {
+        if (returnExpr.exprType != VaporAST.Kind.Trivial) {
             tmp = newTempVariable();
             ret.subprogram += indent(tmp + " = " + returnExpr.tempExprResult + "\n");
         }
@@ -625,14 +625,18 @@ public class MiniJavaToVaporVis extends GJDepthFirst<VaporAST, SymbolTable> {
     }
 
     private int findMethodIndex(String type, String method, SymbolTable symt) {
+        if (type == "") {
+            return -1;
+        }
+
         final List<String> methods = methodTables.get(type);
-        final int index = methods.indexOf(method);
+        final int index = methods.indexOf(type + "." + method);
         if (index >= 0) {
             return index;
         }
+
         final ClassBinding clazz = symt.getClassBinding(type);
-        final String baseClass = clazz.getBaseClass();
-        return findMethodIndex(baseClass, method, symt);
+        return findMethodIndex(clazz.getBaseClass(), method, symt);
     }
 
     public VaporAST visit(MessageSend n, SymbolTable symt) {

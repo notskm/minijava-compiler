@@ -1,0 +1,227 @@
+
+const vmt_Test
+  :Test.testBasicInheritance
+
+const vmt_Getter
+  :Getter.getDerived2
+
+const vmt_Base
+  :Base.initBase
+  :Base.add
+
+const vmt_Derived1
+  :Base.initBase
+  :Base.add
+  :Derived1.initDerived
+  :Derived1.sub
+
+const vmt_Derived2
+  :Base.initBase
+  :Derived2.add
+  :Derived1.initDerived
+  :Derived2.sub
+  :Derived2.initDerived2
+  :Derived2.mul
+
+
+func Main()
+  t.0 = HeapAllocZ(4)
+  [t.0] = :vmt_Test
+  tester = t.0
+  if tester goto :null1
+    Error("null pointer")
+  null1:
+  t.1 = [tester]
+  t.1 = [t.1+0]
+  throwaway = call t.1(tester)
+  ret
+
+func Test.testBasicInheritance(this)
+  t.0 = HeapAllocZ(8)
+  [t.0] = :vmt_Base
+  test1 = t.0
+  t.1 = HeapAllocZ(12)
+  [t.1] = :vmt_Derived1
+  test2 = t.1
+  test3 = test2
+  t.2 = HeapAllocZ(16)
+  [t.2] = :vmt_Derived2
+  test4 = t.2
+  test5 = test4
+  test6 = test4
+  if test1 goto :null2
+    Error("null pointer")
+  null2:
+  t.3 = [test1]
+  t.3 = [t.3+0]
+  throwaway = call t.3(test1 5)
+  if test1 goto :null3
+    Error("null pointer")
+  null3:
+  t.4 = [test1]
+  t.4 = [t.4+4]
+  t.5 = call t.4(test1 5)
+  PrintIntS(t.5)
+  if test2 goto :null4
+    Error("null pointer")
+  null4:
+  t.6 = [test2]
+  t.6 = [t.6+0]
+  throwaway = call t.6(test2 3)
+  if test2 goto :null5
+    Error("null pointer")
+  null5:
+  t.7 = [test2]
+  t.7 = [t.7+8]
+  throwaway = call t.7(test2 8)
+  if test2 goto :null6
+    Error("null pointer")
+  null6:
+  t.8 = [test2]
+  t.8 = [t.8+4]
+  t.9 = call t.8(test2 5)
+  PrintIntS(t.9)
+  if test2 goto :null7
+    Error("null pointer")
+  null7:
+  t.10 = [test2]
+  t.10 = [t.10+12]
+  t.11 = call t.10(test2 5)
+  PrintIntS(t.11)
+  if test3 goto :null8
+    Error("null pointer")
+  null8:
+  t.12 = [test3]
+  t.12 = [t.12+0]
+  throwaway = call t.12(test3 7)
+  if test2 goto :null9
+    Error("null pointer")
+  null9:
+  t.13 = [test2]
+  t.13 = [t.13+12]
+  t.14 = call t.13(test2 5)
+  PrintIntS(t.14)
+  if test2 goto :null10
+    Error("null pointer")
+  null10:
+  t.15 = [test2]
+  t.15 = [t.15+4]
+  t.16 = call t.15(test2 5)
+  PrintIntS(t.16)
+  if test3 goto :null11
+    Error("null pointer")
+  null11:
+  t.17 = [test3]
+  t.17 = [t.17+4]
+  t.18 = call t.17(test3 5)
+  PrintIntS(t.18)
+  if test4 goto :null12
+    Error("null pointer")
+  null12:
+  t.19 = [test4]
+  t.19 = [t.19+0]
+  throwaway = call t.19(test4 4)
+  if test4 goto :null13
+    Error("null pointer")
+  null13:
+  t.20 = [test4]
+  t.20 = [t.20+8]
+  throwaway = call t.20(test4 5)
+  if test4 goto :null14
+    Error("null pointer")
+  null14:
+  t.21 = [test4]
+  t.21 = [t.21+16]
+  throwaway = call t.21(test4 6)
+  if test4 goto :null15
+    Error("null pointer")
+  null15:
+  t.22 = [test4]
+  t.22 = [t.22+4]
+  t.23 = call t.22(test4 20)
+  PrintIntS(t.23)
+  if test4 goto :null16
+    Error("null pointer")
+  null16:
+  t.24 = [test4]
+  t.24 = [t.24+12]
+  t.25 = call t.24(test4 20)
+  PrintIntS(t.25)
+  if test4 goto :null17
+    Error("null pointer")
+  null17:
+  t.26 = [test4]
+  t.26 = [t.26+20]
+  t.27 = call t.26(test4 10)
+  PrintIntS(t.27)
+  if test5 goto :null18
+    Error("null pointer")
+  null18:
+  t.28 = [test5]
+  t.28 = [t.28+4]
+  t.29 = call t.28(test5 6)
+  PrintIntS(t.29)
+  if test6 goto :null19
+    Error("null pointer")
+  null19:
+  t.30 = [test6]
+  t.30 = [t.30+4]
+  t.31 = call t.30(test6 6)
+  PrintIntS(t.31)
+  t.32 = HeapAllocZ(4)
+  [t.32] = :vmt_Getter
+  if t.32 goto :null20
+    Error("null pointer")
+  null20:
+  t.33 = [t.32]
+  t.33 = [t.33+0]
+  t.34 = call t.33(t.32)
+  if t.34 goto :null21
+    Error("null pointer")
+  null21:
+  t.35 = [t.34]
+  t.35 = [t.35+4]
+  t.36 = call t.35(t.34 6)
+  PrintIntS(t.36)
+  ret 0
+
+func Getter.getDerived2(this)
+  t.0 = HeapAllocZ(16)
+  [t.0] = :vmt_Derived2
+  d = t.0
+  ret d
+
+func Base.initBase(this b)
+  [this+4] = b
+  ret 0
+
+func Base.add(this x)
+  t.0 = [this+4]
+  t.1 = Add(t.0 x)
+  ret t.1
+
+func Derived1.initDerived(this b)
+  [this+8] = b
+  ret 0
+
+func Derived1.sub(this x)
+  t.0 = [this+8]
+  t.1 = Sub(t.0 x)
+  ret t.1
+
+func Derived2.initDerived2(this b)
+  [this+12] = b
+  ret 0
+
+func Derived2.add(this x)
+  t.0 = Add(x x)
+  ret t.0
+
+func Derived2.sub(this x)
+  t.0 = Sub(100 x)
+  ret t.0
+
+func Derived2.mul(this x)
+  t.0 = [this+12]
+  t.1 = MulS(t.0 x)
+  ret t.1
