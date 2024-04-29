@@ -1,5 +1,8 @@
 build/
 bin/
-*.class
 .gradle/
+.vscode/
+*.class
 *.log
+*.out
+mars.jar

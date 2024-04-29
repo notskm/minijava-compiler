@@ -116,10 +116,10 @@ public class IntegrationTest {
             root.accept(check, vis.symt);
 
             final String output = J2V.compileToVapor(root, vis.symt);
-            Files.write(Paths.get("TESTOUT.vapor"), output.getBytes());
+            Files.write(Paths.get("testvapor.out"), output.getBytes());
 
             final String expected = runVaporProgram(vaporFilename);
-            final String result = runVaporProgram("TESTOUT.vapor");
+            final String result = runVaporProgram("testvapor.out");
 
             assertEquals(expected, result);
         } catch (Exception e) {
