@@ -55,7 +55,12 @@ public class ControlFlowGraph {
         }
 
         for (VVarRef.Local param : function.params) {
-            intervals.get(param.ident).startLine = param.sourcePos.line;
+            final LiveInterval interval = intervals.get(param.ident);
+
+            // Params that are not used in the function do not get intervals
+            if (interval != null) {
+                interval.startLine = param.sourcePos.line;
+            }
         }
 
         for (LiveInterval interval : intervals.values()) {
