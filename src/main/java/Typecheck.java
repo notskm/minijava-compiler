@@ -34,6 +34,7 @@ public class Typecheck {
             parse();
             return typecheck();
         } catch (ParseException e) {
+            System.err.println(e.getMessage());
             return false;
         }
     };

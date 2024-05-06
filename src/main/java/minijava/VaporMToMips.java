@@ -3,6 +3,7 @@ package minijava;
 import java.util.Map;
 import java.util.HashMap;
 
+import cs132.vapor.ast.VAddr;
 import cs132.vapor.ast.VAssign;
 import cs132.vapor.ast.VBranch;
 import cs132.vapor.ast.VBuiltIn;
@@ -28,12 +29,14 @@ public class VaporMToMips {
     private int indentLevel;
     private StaticData data = new StaticData();
 
-    public void toMips(VaporProgram vapor) {
-        String dataSegment = compileDataSegments(vapor);
-        String textSegment = compileTextSegment(vapor);
-        String builtinFunctions = getBuiltinFunctions();
-        String endDataSegment = getEndDataSegment();
-        System.out.print(dataSegment + textSegment + builtinFunctions + endDataSegment);
+    public String toMips(VaporProgram vapor) {
+        final String dataSegment = compileDataSegments(vapor);
+        final String textSegment = compileTextSegment(vapor);
+        final String builtinFunctions = getBuiltinFunctions();
+        final String endDataSegment = getEndDataSegment();
+
+        final String program = dataSegment + textSegment + builtinFunctions + endDataSegment;
+        return program;
     }
 
     private String compileDataSegments(VaporProgram vapor) {
@@ -45,7 +48,11 @@ public class VaporMToMips {
             indentLevel++;
 
             for (VOperand operand : segment.values) {
-                dataSegment += toLine(operand.toString().substring(1));
+                if (operand instanceof VLabelRef) {
+                    dataSegment += toLine(operand.toString().substring(1));
+                } else {
+                    dataSegment += toLine(operand.toString());
+                }
             }
             indentLevel--;
             dataSegment += toLine("");
@@ -80,7 +87,13 @@ public class VaporMToMips {
         return functions;
     }
 
+    static final int wordSize = 4;
+    int frameSize = 0;
+    static final int frameOffset = -8;
+
     private String compileFunction(VFunction function) {
+        frameSize = (2 + function.stack.local + function.stack.out) * wordSize;
+
         String func = "";
         func += function.ident + ":\n";
         indentLevel++;
@@ -92,17 +105,11 @@ public class VaporMToMips {
         return func;
     }
 
-    static final int wordSize = 4;
-    static final int frameSize = 4;
-    static final int frameOffset = -4;
-
     private String functionPrologue(VFunction function) {
-        final int totalStackSize = 8 + function.stack.local * wordSize + function.stack.out * wordSize;
-
         String prologue = "";
         prologue += toLine("sw $fp -8($sp)");
         prologue += toLine("move $fp $sp");
-        prologue += toLine("subu $sp $sp " + totalStackSize);
+        prologue += toLine("subu $sp $sp " + frameSize);
         prologue += toLine("sw $ra -4($fp)");
         return prologue;
     }
@@ -112,7 +119,7 @@ public class VaporMToMips {
 
         Map<Integer, String> labelIndex = buildLabelIndex(function);
 
-        InstructionVis instructionVis = new InstructionVis();
+        InstructionVis instructionVis = new InstructionVis(frameSize);
 
         int i = 0;
         for (VInstr instruction : function.body) {
@@ -139,12 +146,10 @@ public class VaporMToMips {
     }
 
     private String functionEpilogue(VFunction function) {
-        final int totalStackSize = 8 + function.stack.local * wordSize + function.stack.out * wordSize;
-
         String epilogue = "";
         epilogue += toLine("lw $ra -4($fp)");
         epilogue += toLine("lw $fp -8($fp)");
-        epilogue += toLine("addu $sp $sp " + totalStackSize);
+        epilogue += toLine("addu $sp $sp " + frameSize);
         epilogue += toLine("jr $ra");
         return epilogue;
     }
@@ -163,11 +168,13 @@ public class VaporMToMips {
         String print = toLine("_print:");
 
         indentLevel++;
+        print += toLine("move $t9 $v0");
         print += toLine("li $v0 1   # syscall: print integer");
         print += toLine("syscall");
         print += toLine("la $a0 _newline");
         print += toLine("li $v0 4   # syscall: print string");
         print += toLine("syscall");
+        print += toLine("move $v0 $t9");
         print += toLine("jr $ra");
         indentLevel--;
 
@@ -236,6 +243,12 @@ public class VaporMToMips {
     }
 
     static class InstructionVis extends VisitorPR<StaticData, String, Throwable> {
+        final int frameSize;
+
+        public InstructionVis(int frameSize) {
+            this.frameSize = frameSize;
+        }
+
         private String toLine(String str) {
             return "  " + str + "\n";
         }
@@ -246,6 +259,10 @@ public class VaporMToMips {
 
             if (arg0.source instanceof VLitInt) {
                 mnemonic = "li";
+            } else if (arg0.source instanceof VLabelRef) {
+                String subprogram = toLine("la $t9 " + arg0.source.toString().split(":")[1]);
+                subprogram += toLine("move " + arg0.dest + " $t9");
+                return subprogram;
             }
 
             return toLine(mnemonic + " " + arg0.dest + " " + arg0.source);
@@ -253,8 +270,9 @@ public class VaporMToMips {
 
         @Override
         public String visit(StaticData data, VCall arg0) throws Throwable {
-            if (arg0.addr.toString().equals(":AllocArray")) {
-                return toLine("jal AllocArray");
+            if (arg0.addr instanceof VAddr.Label) {
+                final String addr = arg0.addr.toString().split(":")[1];
+                return toLine("jal " + addr);
             } else {
                 return toLine("jalr " + arg0.addr);
             }
@@ -389,7 +407,7 @@ public class VaporMToMips {
                 final String label = arg0.source.toString().substring(1);
                 subprogram += toLine("la $t9 " + label);
                 subprogram += toLine("sw $t9 " + pointer);
-            } else if (arg0.source instanceof VLitInt) {
+            } else {
                 String val = arg0.source.toString();
                 if (val.equals("0")) {
                     subprogram += toLine("sw $0" + " " + pointer);
@@ -407,16 +425,43 @@ public class VaporMToMips {
 
             final String source = arg0.source.toString();
 
-            final int offset = dest.index * 4;
-            final String stackPointer = offset + "($sp)";
+            final String stackPointer = getFrameLocation(dest.index, dest);
 
             if (arg0.source instanceof VVarRef) {
                 subprogram += toLine("sw " + source + " " + stackPointer);
+            } else if (arg0.source instanceof VLabelRef) {
+                subprogram += toLine("la $t9 " + source.split(":")[1]);
+                subprogram += toLine("sw $t9 " + stackPointer);
             } else {
                 subprogram += toLine("li $t9 " + source);
                 subprogram += toLine("sw $t9 " + stackPointer);
             }
             return subprogram;
+        }
+
+        private String getFrameLocation(int index, VMemRef.Stack stack) {
+            if (stack.region == VMemRef.Stack.Region.Local) {
+                return getLocalFrameLocation(index, stack);
+            } else if (stack.region == VMemRef.Stack.Region.In) {
+                return getInFrameLocation(index, stack);
+            } else {
+                return getOutFrameLocation(index, stack);
+            }
+        }
+
+        private String getLocalFrameLocation(int index, VMemRef.Stack stack) {
+            final int offset = frameSize + frameOffset - (wordSize + index * wordSize);
+            return offset + "($sp)";
+        }
+
+        private String getInFrameLocation(int index, VMemRef.Stack stack) {
+            final int offset = index * wordSize;
+            return offset + "($fp)";
+        }
+
+        private String getOutFrameLocation(int index, VMemRef.Stack stack) {
+            final int offset = index * wordSize;
+            return offset + "($sp)";
         }
 
         @Override
@@ -429,23 +474,38 @@ public class VaporMToMips {
         }
 
         private String loadFromGlobal(StaticData data, VMemRead arg0, VMemRef.Global global) {
+            String subprogram = "";
+
             final int byteOffset = global.byteOffset;
-            return toLine("lw " + arg0.dest + " " + byteOffset + "(" + global.base.toString() + ")");
+            String source = global.base.toString();
+            if (global.base instanceof VAddr.Label) {
+                subprogram += toLine("la $t9 " + source.split(":")[1]);
+                source = "$t9";
+            }
+            subprogram += toLine("lw " + arg0.dest + " " + byteOffset + "(" + source + ")");
+            return subprogram;
         }
 
         private String loadFromStack(StaticData data, VMemRead arg0, VMemRef.Stack stack) {
-            final int offset = stack.index * wordSize;
-            if (stack.region == VMemRef.Stack.Region.In) {
-                return toLine("lw " + arg0.dest + " " + offset + "($fp)");
-            } else {
-                return toLine("lw " + arg0.dest + " " + offset + "($sp)");
-            }
+            final String pointer = getFrameLocation(stack.index, stack);
+            return toLine("lw " + arg0.dest + " " + pointer);
         }
 
         @Override
         public String visit(StaticData data, VBranch arg0) throws Throwable {
+            String subprogram = "";
+
+            String arg = arg0.value.toString();
+            if (arg0.value instanceof VVarRef) {
+                arg = arg0.value.toString();
+            } else {
+                arg = "$t9";
+                subprogram += toLine("li $t9 " + arg0.value);
+            }
+
             final String mnemonic = arg0.positive ? "bnez" : "beqz";
-            return toLine(mnemonic + " " + arg0.value + " " + arg0.target.ident);
+            subprogram += toLine(mnemonic + " " + arg + " " + arg0.target.ident);
+            return subprogram;
         }
 
         @Override
@@ -455,8 +515,6 @@ public class VaporMToMips {
 
         @Override
         public String visit(StaticData data, VReturn arg0) throws Throwable {
-            // TODO Auto-generated method stub
-            // throw new UnsupportedOperationException("Unimplemented method 'visit'");
             return "";
         }
     }

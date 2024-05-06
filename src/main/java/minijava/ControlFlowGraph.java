@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import cs132.util.SourcePos;
 import cs132.vapor.ast.*;
 
 public class ControlFlowGraph {
@@ -33,10 +34,10 @@ public class ControlFlowGraph {
         functionCallLines = vis.functionCallLines;
     }
 
-    public LiveInterval[] getLiveIntervals() {
+    public Map<String, LiveInterval> getLiveIntervals() {
         Map<String, LiveInterval> intervals = new HashMap<>();
         for (Node node : allNodes) {
-            final int line = node.instruction.sourcePos.line;
+            final int line = node.sourcePos.line;
             for (String var : node.liveIn) {
                 intervals.putIfAbsent(var, new LiveInterval(var));
 
@@ -71,7 +72,7 @@ public class ControlFlowGraph {
             }
         }
 
-        return intervals.values().toArray(new LiveInterval[intervals.size()]);
+        return intervals;
     }
 
     static class LiveInterval {
@@ -100,7 +101,7 @@ public class ControlFlowGraph {
     }
 
     public static class Node {
-        public VInstr instruction;
+        public SourcePos sourcePos;
         public List<Node> predecessors = new ArrayList<>();
         public List<Node> successors = new ArrayList<>();
 
@@ -152,9 +153,18 @@ public class ControlFlowGraph {
 
         public Vis(VFunction function) {
             int previousLine = 0;
+
+            Node functionNode = new Node();
+            functionNode.sourcePos = function.sourcePos;
+            for (VVarRef param : function.params) {
+                functionNode.def.add(param.toString());
+            }
+            nextNode.put(previousLine, functionNode);
+            allNodes.put(function.sourcePos.line, functionNode);
+
             for (VInstr instruction : function.body) {
                 Node node = new Node();
-                node.instruction = instruction;
+                node.sourcePos = instruction.sourcePos;
                 nextNode.put(previousLine, node);
                 allNodes.put(instruction.sourcePos.line, node);
                 previousLine = instruction.sourcePos.line;
@@ -283,7 +293,7 @@ public class ControlFlowGraph {
 
         private void attachImmediateSuccessor(VInstr instr) {
             final Node node = allNodes.get(instr.sourcePos.line);
-            final int line = node.instruction.sourcePos.line;
+            final int line = node.sourcePos.line;
             final Node successor = nextNode.get(line);
             attach(node, successor);
         }

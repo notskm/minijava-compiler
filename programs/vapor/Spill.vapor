@@ -1,0 +1,133 @@
+
+const vmt_Tester
+  :Tester.runTests
+  :Tester.sum
+  :Tester.testBranchWithLocalArg
+  :Tester.testBranchWithIntLiteral
+  :Tester.testSpilledParameter
+
+
+func Main()
+  t.0 = HeapAllocZ(12)
+  [t.0] = :vmt_Tester
+  if t.0 goto :null1
+    Error("null pointer")
+  null1:
+  t.1 = [t.0]
+  t.1 = [t.1+0]
+  t.2 = call t.1(t.0)
+  PrintIntS(t.2)
+  ret
+
+func Tester.runTests(this)
+  t.0 = [this]
+  t.0 = [t.0+8]
+  t.1 = call t.0(this)
+  PrintIntS(t.1)
+
+  t.0 = [this]
+  t.0 = [t.0+12]
+  t.1 = call t.0(this 0)
+  PrintIntS(t.1)
+
+  t.0 = [this]
+  t.0 = [t.0+16]
+  t.1 = call t.0(this)
+  PrintIntS(t.1)
+
+  ret 0
+
+func Tester.testBranchWithLocalArg(this)
+  assignDest = 5
+  assignSource = 4
+
+  x = 3
+  y = 4
+  z = 5
+  a = 0
+  b = a
+  c = b
+  d = c
+  e = d
+  f = e
+  g = f
+  h = g
+  i = h
+  j = i
+  j = 8
+  k = 9
+  PrintIntS(a)
+  PrintIntS(b)
+  PrintIntS(c)
+  PrintIntS(d)
+  PrintIntS(e)
+  PrintIntS(f)
+  PrintIntS(g)
+  PrintIntS(h)
+  PrintIntS(i)
+  if0 j goto :if1_else
+    goto :if1_end
+  if1_else:
+    PrintIntS(j)
+    j = Add(j k)
+  if1_end:
+
+  x = Add(y z)
+  PrintIntS(x)
+
+  PrintIntS(assignDest)
+  PrintIntS(assignSource)
+  assignDest = assignSource
+  PrintIntS(assignDest)
+  PrintIntS(assignSource)
+
+  ret j
+  
+func Tester.testBranchWithIntLiteral(this b)
+  a = b
+  out = 0
+  if0 0 goto :if2_else
+    out = 5
+    goto :if2_end
+  if2_else:
+    out = 1
+  if2_end:
+  ret out
+
+func Tester.testSpilledParameter(this)
+  a = 10
+  b = a
+  c = b
+  d = c
+  e = d
+  f = e
+  g = f
+  h = g
+  i = h
+  j = i
+  j = 8
+  k = 9
+
+  PrintIntS(a)
+  PrintIntS(b)
+  PrintIntS(c)
+  PrintIntS(d)
+  PrintIntS(e)
+  PrintIntS(f)
+  PrintIntS(g)
+  PrintIntS(h)
+  PrintIntS(i)
+  a = 5
+  identityFunc = [this]
+  identityFunc = [identityFunc+4]
+  returnVal = call identityFunc(this 1 2 3 4 5 6 a)
+  ret returnVal
+
+func Tester.sum(this a b c d e f g)
+  t.0 = Add(a b)
+  t.0 = Add(t.0 c)
+  t.0 = Add(t.0 d)
+  t.0 = Add(t.0 e)
+  t.0 = Add(t.0 f)
+  t.0 = Add(t.0 g)
+  ret t.0

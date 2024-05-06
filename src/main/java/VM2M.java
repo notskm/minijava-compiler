@@ -12,12 +12,17 @@ import java.io.PrintStream;
 public class VM2M {
     public static void main(String[] args) {
         try {
-            final VaporProgram vaporProgram = parseVapor(System.in, System.err);
-            VaporMToMips vaporCompiler = new VaporMToMips();
-            vaporCompiler.toMips(vaporProgram);
+            final String mipsProgram = compile(System.in, System.err);
+            System.out.print(mipsProgram);
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }
+    }
+
+    public static String compile(InputStream in, PrintStream err) throws IOException {
+        final VaporProgram vaporMProgram = parseVapor(in, err);
+        VaporMToMips vaporCompiler = new VaporMToMips();
+        return vaporCompiler.toMips(vaporMProgram);
     }
 
     public static VaporProgram parseVapor(InputStream in, PrintStream err)
